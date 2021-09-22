@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+npx --no-install prettier --write "**/*.{js,ts}"
+npx --no-install eslint --cache --fix "**/*.{js,ts}" --ignore-pattern "dist/**"
