@@ -36,3 +36,7 @@ lerna-debug.log*
 
 # ESLint
 .eslintcache
+
+# ENV
+.env
+.env.*
