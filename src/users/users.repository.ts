@@ -8,12 +8,12 @@ import { User, UserDocument } from '@root/users/schemas/user.schema';
 export class UsersRepository {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(user: User): Promise<UserDocument> {
-    return await this.userModel.create(user);
+  async create(user: User): Promise<User> {
+    return (await this.userModel.create(user)).toJSON();
   }
 
-  async find(filter: Partial<User>): Promise<UserDocument[]> {
-    return await this.userModel.find(filter);
+  async find(filter: Partial<User>): Promise<User[]> {
+    return (await this.userModel.find(filter)).map((user) => user.toJSON());
   }
 
   async update(filter: Partial<User>, update: Partial<User>): Promise<void> {

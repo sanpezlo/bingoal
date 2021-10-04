@@ -5,7 +5,7 @@ import { Roles } from '@root/users/roles/roles.enum';
 
 export type UserDocument = User & Document;
 
-@Schema()
+@Schema({ versionKey: false, timestamps: true })
 export class User {
   @Prop({ required: true, type: String })
   name: string;
@@ -19,8 +19,8 @@ export class User {
   @Prop({ required: true, type: String })
   password: string;
 
-  @Prop({ required: false, type: [String], enum: Roles })
-  roles?: string[];
+  @Prop({ required: false, type: [String], enum: Roles, default: [] })
+  roles?: Roles[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
