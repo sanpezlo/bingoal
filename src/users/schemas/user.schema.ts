@@ -1,11 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+import { schemaOptions, timestamps } from '@root/app/config/database/schema';
 import { Roles } from '@root/users/roles/roles.enum';
 
 export type UserDocument = User & Document;
 
-@Schema({ versionKey: false, timestamps: true })
+@Schema(schemaOptions)
 export class User {
   @Prop({ required: true, type: String })
   name: string;
@@ -21,6 +22,12 @@ export class User {
 
   @Prop({ required: false, type: [String], enum: Roles, default: [] })
   roles?: Roles[];
+
+  @Prop({ required: false, type: Date })
+  [timestamps.createdAt]?: Date;
+
+  @Prop({ required: false, type: Date })
+  [timestamps.updatedAt]?: Date;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
