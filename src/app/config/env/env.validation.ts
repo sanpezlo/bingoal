@@ -16,4 +16,16 @@ export class EnvironmentVariables {
 
   @IsString()
   MONGO_URI: string;
+
+  @IsString()
+  ACCESS_TOKEN_SECRET: string;
+
+  @IsNumber()
+  ACCESS_TOKEN_EXPIRES_IN: number;
+
+  @IsString()
+  REFRESH_TOKEN_SECRET: string;
+
+  @IsNumber()
+  REFRESH_TOKEN_EXPIRES_IN: number;
 }

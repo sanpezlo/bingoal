@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { env, envValidation } from '@root/app/config/env';
+import { env, envValidation } from '@root/app/config/env/env';
 import { UsersModule } from '@root/users/users.module';
 
 @Module({
