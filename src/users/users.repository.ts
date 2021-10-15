@@ -13,17 +13,17 @@ export class UsersRepository {
     return (await this.userModel.create(user)).toJSON() as $User;
   }
 
-  async find(filter: Partial<User>): Promise<$User[]> {
+  async find(filter: Partial<$User>): Promise<$User[]> {
     return (await this.userModel.find(filter)).map((user) =>
       user.toJSON(),
     ) as $User[];
   }
 
-  async update(filter: Partial<User>, update: Partial<User>): Promise<void> {
+  async update(filter: Partial<$User>, update: Partial<User>): Promise<void> {
     await this.userModel.updateMany(filter, update);
   }
 
-  async delete(filter: Partial<User>): Promise<void> {
+  async delete(filter: Partial<$User>): Promise<void> {
     await this.userModel.deleteMany(filter);
   }
 

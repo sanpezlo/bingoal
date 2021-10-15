@@ -1,14 +1,18 @@
 import { User } from '@root/users/schemas/user.schema';
-import { Roles } from '@root/users/roles/roles.enum';
 
 import { timestamps } from '@root/app/config/database/schema';
+
+export enum Role {
+  'Verified' = 'Verified',
+  'Admin' = 'Admin',
+}
 
 export class IUser implements Omit<User, 'password'> {
   _id: string;
   name: string;
   email: string;
   email_verified_at?: Date;
-  roles?: Roles[];
+  roles?: Role[];
   [timestamps.createdAt]: Date;
   [timestamps.updatedAt]: Date;
 }
