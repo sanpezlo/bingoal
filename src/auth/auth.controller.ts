@@ -1,5 +1,6 @@
-import { Controller, Version, Post, Body } from '@nestjs/common';
+import { Version, Post, Body } from '@nestjs/common';
 
+import { Controller } from '@root/app/decorators/controller.decorator';
 import { AuthService } from '@root/auth/auth.service';
 import { LoginDto, RefreshDto } from '@root/auth/dto/auth.dto';
 import { Login } from '@root/app/decorators/auth.decorator';
