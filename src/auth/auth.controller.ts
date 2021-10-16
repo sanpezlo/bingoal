@@ -1,8 +1,10 @@
-import { Controller, Version, Post, Request, Body } from '@nestjs/common';
+import { Controller, Version, Post, Body } from '@nestjs/common';
 
 import { AuthService } from '@root/auth/auth.service';
 import { LoginDto, RefreshDto } from '@root/auth/dto/auth.dto';
 import { Login } from '@root/app/decorators/auth.decorator';
+import { User } from '@root/app/decorators/user.decorator';
+import { IUser } from '@root/users/interfaces/user.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -11,8 +13,8 @@ export class AuthController {
   @Version('1')
   @Login()
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @Request() req) {
-    return this.authService.login(req.user);
+  async login(@Body() loginDto: LoginDto, @User() user: IUser) {
+    return this.authService.login(user);
   }
 
   @Version('1')
