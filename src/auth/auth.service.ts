@@ -25,20 +25,6 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register() {
-    const [user] = await this.userRepository.find({
-      email: 'example@mail.com',
-    });
-    if (!user) {
-      const password = await this.hash('password');
-      this.userRepository.create({
-        email: 'example@mail.com',
-        name: 's',
-        password: password,
-      });
-    }
-  }
-
   async login(user: IUser): Promise<IAuth> {
     const accessPayload: $AccessPayload = {
       sub: user._id,
@@ -51,7 +37,6 @@ export class AuthService {
     const refreshPayload: $RefreshPayload = {
       sub: accessPayload.sub,
       jti: token._id,
-      iat: token.created_at.getTime(),
     };
     const refreshToken = this.createRefreshToken(refreshPayload);
 
@@ -68,8 +53,13 @@ export class AuthService {
 
   async refresh(refreshToken: string): Promise<IAuth> {
     try {
-      const refreshPayload =
-        this.jwtService.verify<$RefreshPayload>(refreshToken);
+      const refreshPayload = this.jwtService.verify<$RefreshPayload>(
+        refreshToken,
+        {
+          secret: this.configService.get<string>('token.access.secret'),
+          ignoreExpiration: false,
+        },
+      );
       const [token] = await this.tokensRepository.find({
         _id: refreshPayload.jti,
         user: refreshPayload.sub,
@@ -79,7 +69,6 @@ export class AuthService {
       const newRefreshPayload: $RefreshPayload = {
         sub: refreshPayload.sub,
         jti: refreshPayload.jti,
-        iat: refreshPayload.iat,
       };
       const accessPayload: $AccessPayload = { sub: refreshPayload.sub };
 
@@ -101,7 +90,6 @@ export class AuthService {
   }
 
   async validateLocal(email: string, password: string): Promise<IUser> {
-    await this.register();
     const [user] = await this.userRepository.find({ email });
     if (user && (await this.validatePassword(user, password)))
       return this.userRepository.format(user);

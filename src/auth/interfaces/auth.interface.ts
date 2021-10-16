@@ -12,7 +12,6 @@ export interface $Token extends Token {
 export interface $RefreshPayload {
   sub: string;
   jti: string;
-  iat: number;
 }
 
 export interface $AccessPayload {
