@@ -1,7 +1,7 @@
 import { applyDecorators, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from '@root/app/guards/auth.guard';
+import { JwtAuthGuard, LocalAuthGuard } from '@root/app/guards/auth.guard';
 import { RolesGuard } from '@root/app/guards/roles.guard';
 import { Role } from '@root/users/interfaces/user.interface';
 import { IUnauthorized } from '@root/auth/interfaces/auth.interface';
@@ -21,7 +21,7 @@ export function Auth(...roles: Role[]) {
 
 export function Login() {
   return applyDecorators(
-    UseGuards(JwtAuthGuard),
+    UseGuards(LocalAuthGuard),
     ApiUnauthorizedResponse({
       description: 'Unauthorized',
       type: IUnauthorized,
