@@ -43,7 +43,7 @@ export class AuthService {
     return {
       token_type: 'Bearer',
       access_token: accessToken,
-      expires_in: this.configService.get<number>('token.access.exprires_in'),
+      expires_in: this.configService.get<number>('token.access.expires_in'),
       refresh_token: refreshToken,
       refresh_token_expires_in: this.configService.get<number>(
         'token.refresh.expires_in',
@@ -78,7 +78,7 @@ export class AuthService {
       return {
         token_type: 'Bearer',
         access_token: accessToken,
-        expires_in: this.configService.get<number>('token.access.exprires_in'),
+        expires_in: this.configService.get<number>('token.access.expires_in'),
         refresh_token: newRefreshToken,
         refresh_token_expires_in: this.configService.get<number>(
           'token.refresh.expires_in',
