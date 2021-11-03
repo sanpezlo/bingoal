@@ -15,6 +15,7 @@ import {
 import { TokensRepository } from '@root/auth/tokens.repository';
 import { UsersRepository } from '@root/users/users.repository';
 import { IUser, $User } from '@root/users/interfaces/user.interface';
+import { RefreshDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -51,10 +52,10 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string): Promise<IAuth> {
+  async refresh(refreshDto: RefreshDto): Promise<IAuth> {
     try {
       const refreshPayload = this.jwtService.verify<$RefreshPayload>(
-        refreshToken,
+        refreshDto.refresh,
         {
           secret: this.configService.get<string>('token.access.secret'),
           ignoreExpiration: false,
@@ -87,6 +88,10 @@ export class AuthService {
     } catch (error) {
       throw new BadRequestException(['refresh must be a valid jwt string']);
     }
+  }
+
+  profile(user: IUser) {
+    return user;
   }
 
   async validateLocal(email: string, password: string): Promise<IUser> {

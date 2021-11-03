@@ -14,20 +14,20 @@ export class AuthController {
   @Version('1')
   @Login()
   @Post('login')
-  async login(@Body() loginDto: LoginDto, @User() user: IUser) {
+  async login(@Body() loginDto: LoginDto, @User() user?: IUser) {
     return this.authService.login(user);
   }
 
   @Version('1')
   @Post('refresh')
   async refresh(@Body() refreshDto: RefreshDto) {
-    return this.authService.refresh(refreshDto.refresh);
+    return this.authService.refresh(refreshDto);
   }
 
   @Version('1')
   @Auth()
   @Get('profile')
-  profile(@User() user: IUser) {
-    return user;
+  profile(@User() user?: IUser) {
+    return this.authService.profile(user);
   }
 }
