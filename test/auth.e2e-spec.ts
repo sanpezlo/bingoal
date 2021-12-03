@@ -79,7 +79,7 @@ describe('AuthController (e2e)', () => {
   });
 
   describe('/refresh (v1)', () => {
-    test('should return an bad request exception', async () => {
+    test('should return a bad request exception', async () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
         .expect(400)
