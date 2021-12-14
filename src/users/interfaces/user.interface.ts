@@ -14,7 +14,7 @@ export class IUser implements Omit<User, 'password'> {
   _id: string;
 
   @ApiProperty({
-    example: 'Subject',
+    example: 'example',
   })
   name: string;
 
