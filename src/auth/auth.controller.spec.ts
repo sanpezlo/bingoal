@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { AuthController } from '@root/auth/auth.controller';
 import { AuthService } from '@root/auth/auth.service';
-import { LoginDto, RefreshDto } from './dto/auth.dto';
+import { LoginDto, RefreshDto, UpdatePasswordDto } from './dto/auth.dto';
 
 describe('AuthController', () => {
   let authController: AuthController;
@@ -15,7 +15,7 @@ describe('AuthController', () => {
       useFactory: () => ({
         login: jest.fn(() => ({})),
         refresh: jest.fn(() => ({})),
-        profile: jest.fn(() => ({})),
+        updatePassword: jest.fn(() => ({})),
       }),
     };
     const module: TestingModule = await Test.createTestingModule({
@@ -44,8 +44,12 @@ describe('AuthController', () => {
     expect(spyService.refresh).toHaveBeenCalledWith(refreshDto);
   });
 
-  it('should be called profile method', () => {
-    authController.profile();
-    expect(spyService.profile).toHaveBeenCalled();
+  it('should be called updatePassword method', () => {
+    const updatePasswordDto = new UpdatePasswordDto();
+    authController.updatePassword(updatePasswordDto);
+    expect(spyService.updatePassword).toHaveBeenCalledWith(
+      undefined,
+      updatePasswordDto,
+    );
   });
 });

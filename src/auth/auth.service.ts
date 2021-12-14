@@ -1,5 +1,8 @@
 import {
   BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -15,14 +18,15 @@ import {
 import { TokensRepository } from '@root/auth/tokens.repository';
 import { UsersRepository } from '@root/users/users.repository';
 import { IUser, $User } from '@root/users/interfaces/user.interface';
-import { RefreshDto } from './dto/auth.dto';
+import { RefreshDto, UpdatePasswordDto } from '@root/auth/dto/auth.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private configService: ConfigService,
     private tokensRepository: TokensRepository,
-    private userRepository: UsersRepository,
+    @Inject(forwardRef(() => UsersRepository))
+    private usersRepository: UsersRepository,
     private jwtService: JwtService,
   ) {}
 
@@ -90,20 +94,16 @@ export class AuthService {
     }
   }
 
-  profile(user: IUser) {
-    return user;
-  }
-
   async validateLocal(email: string, password: string): Promise<IUser> {
-    const [user] = await this.userRepository.find({ email });
+    const [user] = await this.usersRepository.find({ email });
     if (user && (await this.validatePassword(user, password)))
-      return this.userRepository.format(user);
+      return this.usersRepository.format(user);
     return null;
   }
 
   async validateJwt(sub: string): Promise<IUser> {
-    const [user] = await this.userRepository.find({ _id: sub });
-    if (user) return this.userRepository.format(user);
+    const [user] = await this.usersRepository.find({ _id: sub });
+    if (user) return this.usersRepository.format(user);
     return null;
   }
 
@@ -125,5 +125,25 @@ export class AuthService {
       secret: this.configService.get<string>('token.refresh.secret'),
       expiresIn: this.configService.get<number>('token.refresh.expires_in'),
     });
+  }
+
+  async updatePassword(
+    user: IUser,
+    updatePasswordDto: UpdatePasswordDto,
+  ): Promise<IAuth> {
+    const [$user]: $User[] = await this.usersRepository.find({ _id: user._id });
+    if (!(await this.validatePassword($user, updatePasswordDto.password)))
+      throw new ForbiddenException();
+
+    const newPassword = await this.hash(updatePasswordDto.newPassword);
+
+    await this.usersRepository.update(
+      { _id: user._id },
+      { password: newPassword },
+    );
+
+    await this.tokensRepository.delete({ user: user._id });
+
+    return await this.login(user);
   }
 }

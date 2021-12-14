@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 
-import { createUsers, $users } from '@test/utils/users';
+import { createUsers, _users } from '@test/utils/users';
 import { global } from '@root/global';
 import { imports, close } from '@test/utils/app';
 import { AuthModule } from '@root/auth/auth.module';
@@ -25,7 +25,8 @@ describe('AuthController (e2e)', () => {
     usersRepository = moduleFixture.get<UsersRepository>(UsersRepository);
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
-    await createUsers(usersRepository);
+    const [_user] = _users;
+    await createUsers(usersRepository, _user);
 
     app = moduleFixture.createNestApplication();
     global(app);
@@ -51,13 +52,13 @@ describe('AuthController (e2e)', () => {
     await close();
   });
 
-  describe('/login (v1)', () => {
+  describe('[POST] /login (v1)', () => {
     test('should return an unauthorised exception', async () => {
-      const $user = $users[0];
+      const [_user] = _users;
       return request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({
-          email: $user.email,
+          email: _user.email,
           password: '',
         })
         .expect(401)
@@ -65,10 +66,10 @@ describe('AuthController (e2e)', () => {
     });
 
     test('should return the jwt', async () => {
-      const $user = $users[0];
+      const [_user] = _users;
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
-        .send({ email: $user.email, password: $user.password })
+        .send({ email: _user.email, password: _user.password })
         .expect(201);
 
       expect(response.body).toMatchObject(expectedJwtResponse);
@@ -78,7 +79,7 @@ describe('AuthController (e2e)', () => {
     });
   });
 
-  describe('/refresh (v1)', () => {
+  describe('[POST] /refresh (v1)', () => {
     test('should return a bad request exception', async () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
@@ -93,7 +94,7 @@ describe('AuthController (e2e)', () => {
         });
     });
 
-    test('should return an unauthorised exception', async () => {
+    test('should return the jwt', async () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
         .send({
@@ -105,24 +106,62 @@ describe('AuthController (e2e)', () => {
     });
   });
 
-  describe('/profile (v1)', () => {
-    test('should return an unauthorised exception', () => {
+  describe('[PUT] /password (v1)', () => {
+    test('should return an unauthorised exception', async () => {
       return request(app.getHttpServer())
-        .get('/api/v1/auth/profile')
+        .put('/api/v1/auth/password')
         .expect(401)
-        .expect({ statusCode: 401, message: 'Unauthorized' });
+        .expect({
+          statusCode: 401,
+          message: 'Unauthorized',
+        });
     });
 
-    test('should return the user data', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { password, ...$user } = $users[0];
-      const response = await request(app.getHttpServer())
-        .get('/api/v1/auth/profile')
+    test('should return a bad request exception', async () => {
+      return request(app.getHttpServer())
+        .put('/api/v1/auth/password')
         .set('Authorization', token)
+        .expect(400)
+        .expect({
+          statusCode: 400,
+          message: [
+            'password must be a string',
+            'password should not be empty',
+            'newPassword must be a string',
+            'newPassword should not be empty',
+          ],
+          error: 'Bad Request',
+        });
+    });
+
+    test('should return a forbidden exception', async () => {
+      const [_user] = _users;
+      return request(app.getHttpServer())
+        .put('/api/v1/auth/password')
+        .set('Authorization', token)
+        .send({
+          password: _user.password + '1',
+          newPassword: _user.password,
+        })
+        .expect(403)
+        .expect({
+          statusCode: 403,
+          message: 'Forbidden',
+        });
+    });
+
+    test('should return the jwt', async () => {
+      const [_user] = _users;
+      const response = await request(app.getHttpServer())
+        .put('/api/v1/auth/password')
+        .set('Authorization', token)
+        .send({
+          password: _user.password,
+          newPassword: _user.password + '1',
+        })
         .expect(200);
 
-      expect(response.body).toMatchObject($user);
-      expect(response.body.password).toBeUndefined();
+      expect(response.body).toMatchObject(expectedJwtResponse);
     });
   });
 });

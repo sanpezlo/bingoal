@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -15,7 +15,7 @@ import { Token, TokenSchema } from '@root/auth/schemas/token.schema';
 @Module({
   imports: [
     ConfigModule,
-    UsersModule,
+    forwardRef(() => UsersModule),
     PassportModule,
     MongooseModule.forFeature([{ name: Token.name, schema: TokenSchema }]),
     JwtModule.registerAsync({

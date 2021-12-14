@@ -26,3 +26,19 @@ export class RefreshDto {
   })
   refresh: string;
 }
+
+export class UpdatePasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    example: 'password',
+  })
+  password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    example: 'new password',
+  })
+  newPassword: string;
+}
