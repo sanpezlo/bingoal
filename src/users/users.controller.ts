@@ -27,7 +27,7 @@ export class UsersController {
   @Version('1')
   @Auth()
   @Get('me')
-  profile(@User() user?: IUser) {
+  me(@User() user?: IUser) {
     return this.usersService.me(user);
   }
 
