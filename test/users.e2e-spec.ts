@@ -101,7 +101,7 @@ describe('UsersController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
-    test('should return', async () => {
+    test('should return the user data', async () => {
       const users = _users.map((_user) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...user } = _user;
