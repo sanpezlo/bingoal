@@ -74,6 +74,7 @@ export class UsersService {
     if ($users.length) throw new ForbiddenException();
 
     await this.usersRepository.update({ _id: user._id }, update);
-    return this.findOne(user as unknown as FindOneUserDto);
+    const findOneUserDto: FindOneUserDto = { id: user._id };
+    return this.findOne(findOneUserDto);
   }
 }
