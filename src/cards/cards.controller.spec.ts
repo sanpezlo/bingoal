@@ -1,8 +1,8 @@
 import { Provider } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { CardsController } from './cards.controller';
-import { CardsService } from './cards.service';
-import { CreateCardDto } from './dto/cards.dto';
+import { CardsController } from '@root/cards/cards.controller';
+import { CardsService } from '@root/cards/cards.service';
+import { CreateCardDto, FindOneCardDto } from '@root/cards/dto/cards.dto';
 
 describe('CardsController', () => {
   let cardsController: CardsController;
@@ -44,8 +44,8 @@ describe('CardsController', () => {
   });
 
   it('should be called findOne method', () => {
-    const id = '';
-    cardsController.findOne(id);
-    expect(spyService.findOne).toHaveBeenCalledWith(id);
+    const findOneCardDto = new FindOneCardDto();
+    cardsController.findOne(findOneCardDto);
+    expect(spyService.findOne).toHaveBeenCalledWith(findOneCardDto);
   });
 });

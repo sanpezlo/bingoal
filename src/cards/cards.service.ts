@@ -1,7 +1,12 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { CardsRepository } from '@root/cards/cards.repository';
-import { CreateCardDto } from '@root/cards/dto/cards.dto';
+import { CreateCardDto, FindOneCardDto } from '@root/cards/dto/cards.dto';
 import { ICard } from '@root/cards/interfaces/card.interface';
 import { GamesRepository } from '@root/games/games.repository';
 import { $Game } from '@root/games/interfaces/game.interface';
@@ -37,8 +42,9 @@ export class CardsService {
     return await this.cardsRepository.find({});
   }
 
-  async findOne(id: string): Promise<ICard> {
-    const [$card] = await this.cardsRepository.find({ _id: id });
+  async findOne(findOneCardDto: FindOneCardDto): Promise<ICard> {
+    const [$card] = await this.cardsRepository.find({ _id: findOneCardDto.id });
+    if (!$card) throw new NotFoundException();
     return $card;
   }
 

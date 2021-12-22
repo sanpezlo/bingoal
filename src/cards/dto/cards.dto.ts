@@ -1,13 +1,15 @@
 import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
-  //   ValidationArguments,
   IsNotEmpty,
   IsArray,
   ArrayMinSize,
   ArrayMaxSize,
   Validate,
   IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -58,4 +60,11 @@ export class CreateCardDto implements Partial<Card> {
     ],
   })
   data?: number[];
+}
+
+export class FindOneCardDto {
+  @IsString()
+  @MaxLength(24)
+  @MinLength(24)
+  id: string;
 }
