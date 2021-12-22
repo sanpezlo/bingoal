@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { User } from '@root/users/schemas/user.schema';
@@ -51,4 +58,11 @@ export class UpdateUserDto implements Partial<User> {
     example: 'password',
   })
   password: string;
+}
+
+export class FindOneUserDto {
+  @IsString()
+  @MaxLength(24)
+  @MinLength(24)
+  id: string;
 }

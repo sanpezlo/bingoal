@@ -2,8 +2,12 @@ import { Provider } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from '@root/users/users.controller';
 import { UsersService } from '@root/users/users.service';
-import { CreateUserDto, UpdateUserDto } from '@root/users/dto/users.dto';
-import { IUser } from './interfaces/user.interface';
+import {
+  CreateUserDto,
+  FindOneUserDto,
+  UpdateUserDto,
+} from '@root/users/dto/users.dto';
+import { IUser } from '@root/users/interfaces/user.interface';
 
 describe('UsersController', () => {
   let usersController: UsersController;
@@ -47,9 +51,9 @@ describe('UsersController', () => {
   });
 
   it('should be called findOne method', () => {
-    const id = '';
-    usersController.findOne(id);
-    expect(spyService.findOne).toHaveBeenCalledWith(id);
+    const findOneUserDto = new FindOneUserDto();
+    usersController.findOne(findOneUserDto);
+    expect(spyService.findOne).toHaveBeenCalledWith(findOneUserDto);
   });
 
   it('should be called profile method', () => {

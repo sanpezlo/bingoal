@@ -3,10 +3,15 @@ import {
   forwardRef,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { UsersRepository } from '@root/users/users.repository';
-import { CreateUserDto, UpdateUserDto } from '@root/users/dto/users.dto';
+import {
+  CreateUserDto,
+  FindOneUserDto,
+  UpdateUserDto,
+} from '@root/users/dto/users.dto';
 import { $User, IUser } from '@root/users/interfaces/user.interface';
 import { AuthService } from '@root/auth/auth.service';
 
@@ -44,8 +49,11 @@ export class UsersService {
     return user;
   }
 
-  async findOne(id: string): Promise<IUser> {
-    const [$user]: $User[] = await this.usersRepository.find({ _id: id });
+  async findOne(findOneUserDto: FindOneUserDto): Promise<IUser> {
+    const [$user]: $User[] = await this.usersRepository.find({
+      _id: findOneUserDto.id,
+    });
+    if (!$user) throw new NotFoundException();
     return this.usersRepository.format($user);
   }
 
@@ -66,6 +74,6 @@ export class UsersService {
     if ($users.length) throw new ForbiddenException();
 
     await this.usersRepository.update({ _id: user._id }, update);
-    return this.findOne(user._id);
+    return this.findOne(user as unknown as FindOneUserDto);
   }
 }
