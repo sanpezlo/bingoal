@@ -32,7 +32,7 @@ export class CardsService {
     });
 
     await this.gamesRepository.update({ played: false, playing: false }, {
-      $push: { cards: card },
+      $push: { cards: newCard },
     } as Partial<$Game>);
 
     return newCard;
