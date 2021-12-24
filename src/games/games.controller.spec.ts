@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { GamesController } from '@root/games/games.controller';
 import { GamesService } from '@root/games/games.service';
-import { FindOneGameDto } from './dto/games.dto';
+import { FindOneGameDto } from '@root/games/dto/games.dto';
 
 describe('GamesController', () => {
   let gamesController: GamesController;

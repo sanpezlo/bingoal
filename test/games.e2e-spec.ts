@@ -12,7 +12,7 @@ import { UsersRepository } from '@root/users/users.repository';
 import { createAccessToken } from '@test/utils/auth';
 import { UsersModule } from '@root/users/users.module';
 import { CardsRepository } from '@root/cards/cards.repository';
-import { _games } from './utils/games';
+import { _games } from '@test/utils/games';
 import { Card } from '@root/cards/schemas/card.schema';
 
 describe('GamesController (e2e)', () => {

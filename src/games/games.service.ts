@@ -7,7 +7,7 @@ import {
 import { CardsRepository } from '@root/cards/cards.repository';
 import { GamesRepository } from '@root/games/games.repository';
 import { IGame } from '@root/games/interfaces/game.interface';
-import { FindOneGameDto } from './dto/games.dto';
+import { FindOneGameDto } from '@root/games/dto/games.dto';
 
 @Injectable()
 export class GamesService {

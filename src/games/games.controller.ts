@@ -3,7 +3,7 @@ import { Auth } from '@root/app/decorators/auth.decorator';
 
 import { Controller } from '@root/app/decorators/controller.decorator';
 import { GamesService } from '@root/games/games.service';
-import { FindOneGameDto } from './dto/games.dto';
+import { FindOneGameDto } from '@root/games/dto/games.dto';
 
 @Controller('games')
 export class GamesController {
