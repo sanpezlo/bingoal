@@ -126,6 +126,30 @@ describe('CardsController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
+    test('should return a bad request exception', () => {
+      return request(app.getHttpServer())
+        .get(`/api/v1/cards/${id.slice(0, -2)}`)
+        .set('Authorization', token)
+        .expect(400)
+        .expect({
+          statusCode: 400,
+          message: ['id must be longer than or equal to 24 characters'],
+          error: 'Bad Request',
+        });
+    });
+
+    test('should return a bad request exception', () => {
+      return request(app.getHttpServer())
+        .get(`/api/v1/cards/${id}1`)
+        .set('Authorization', token)
+        .expect(400)
+        .expect({
+          statusCode: 400,
+          message: ['id must be shorter than or equal to 24 characters'],
+          error: 'Bad Request',
+        });
+    });
+
     test('should return the card data', async () => {
       const [_card] = _cards;
       const response = await request(app.getHttpServer())

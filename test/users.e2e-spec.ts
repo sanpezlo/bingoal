@@ -145,6 +145,30 @@ describe('UsersController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
+    test('should return a bad request exception', () => {
+      return request(app.getHttpServer())
+        .get(`/api/v1/users/${id.slice(0, -2)}`)
+        .set('Authorization', token)
+        .expect(400)
+        .expect({
+          statusCode: 400,
+          message: ['id must be longer than or equal to 24 characters'],
+          error: 'Bad Request',
+        });
+    });
+
+    test('should return a bad request exception', () => {
+      return request(app.getHttpServer())
+        .get(`/api/v1/users/${id}1`)
+        .set('Authorization', token)
+        .expect(400)
+        .expect({
+          statusCode: 400,
+          message: ['id must be shorter than or equal to 24 characters'],
+          error: 'Bad Request',
+        });
+    });
+
     test('should return the user data', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [, { password, ...user }] = _users;
