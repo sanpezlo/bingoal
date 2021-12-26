@@ -33,8 +33,9 @@ describe('CardsController (e2e)', () => {
     const [_user] = _users;
     const $user = await createUser(usersRepository, _user);
 
-    const [_card] = _cards;
-    await createCard(cardssRepository, _card);
+    const [_card1, _card2] = _cards;
+    await createCard(cardssRepository, _card1);
+    await createCard(cardssRepository, _card2);
 
     token = await createAccessToken(configService, $user._id);
 
