@@ -31,25 +31,27 @@ export class AuthService {
   ) {}
 
   async login(user: IUser): Promise<IAuth> {
-    const accessPayload: $AccessPayload = {
+    const $accessPayload: $AccessPayload = {
       sub: user._id,
     };
-    const accessToken = this.createAccessToken(accessPayload);
+    const accessToken = this.createAccessToken($accessPayload);
 
-    const token = await this.tokensRepository.create({
-      user: accessPayload.sub,
-    });
-    const refreshPayload: $RefreshPayload = {
-      sub: accessPayload.sub,
-      jti: token._id,
+    const $token = this.tokensRepository.toJSON(
+      await this.tokensRepository.create({
+        user: $accessPayload.sub,
+      }),
+    );
+    const $refreshPayload: $RefreshPayload = {
+      sub: $accessPayload.sub,
+      jti: $token._id,
     };
-    const refreshToken = this.createRefreshToken(refreshPayload);
+    const $refreshToken = this.createRefreshToken($refreshPayload);
 
     return {
       token_type: 'Bearer',
       access_token: accessToken,
       expires_in: this.configService.get<number>('token.access.expires_in'),
-      refresh_token: refreshToken,
+      refresh_token: $refreshToken,
       refresh_token_expires_in: this.configService.get<number>(
         'token.refresh.expires_in',
       ),
@@ -58,52 +60,62 @@ export class AuthService {
 
   async refresh(refreshDto: RefreshDto): Promise<IAuth> {
     try {
-      const refreshPayload = this.jwtService.verify<$RefreshPayload>(
+      const $refreshPayload = this.jwtService.verify<$RefreshPayload>(
         refreshDto.refresh,
         {
           secret: this.configService.get<string>('token.access.secret'),
           ignoreExpiration: false,
         },
       );
-      const [token] = await this.tokensRepository.find({
-        _id: refreshPayload.jti,
-        user: refreshPayload.sub,
+      const [tokenDocument] = await this.tokensRepository.find({
+        _id: $refreshPayload.jti,
+        user: $refreshPayload.sub,
       });
-      if (!token) throw new UnauthorizedException();
+      if (!tokenDocument) throw new UnauthorizedException();
 
-      const newRefreshPayload: $RefreshPayload = {
-        sub: refreshPayload.sub,
-        jti: refreshPayload.jti,
+      const $newRefreshPayload: $RefreshPayload = {
+        sub: $refreshPayload.sub,
+        jti: $refreshPayload.jti,
       };
-      const accessPayload: $AccessPayload = { sub: refreshPayload.sub };
+      const $accessPayload: $AccessPayload = { sub: $newRefreshPayload.sub };
 
-      const accessToken = this.createAccessToken(accessPayload);
-      const newRefreshToken = this.createRefreshToken(newRefreshPayload);
+      const accessToken = this.createAccessToken($accessPayload);
+      const $refreshToken = this.createRefreshToken($newRefreshPayload);
 
       return {
         token_type: 'Bearer',
         access_token: accessToken,
         expires_in: this.configService.get<number>('token.access.expires_in'),
-        refresh_token: newRefreshToken,
+        refresh_token: $refreshToken,
         refresh_token_expires_in: this.configService.get<number>(
           'token.refresh.expires_in',
         ),
       };
     } catch (error) {
+      const $refreshPayload = this.jwtService.verify<$RefreshPayload>(
+        refreshDto.refresh,
+        {
+          secret: this.configService.get<string>('token.access.secret'),
+          ignoreExpiration: true,
+        },
+      );
+      await this.tokensRepository.delete({ _id: $refreshPayload.jti });
       throw new BadRequestException(['refresh must be a valid jwt string']);
     }
   }
 
   async validateLocal(email: string, password: string): Promise<IUser> {
-    const [user] = await this.usersRepository.find({ email });
-    if (user && (await this.validatePassword(user, password)))
-      return this.usersRepository.format(user);
+    const [userDocument] = await this.usersRepository.find({ email });
+    const $user: $User = this.usersRepository.toJSON(userDocument);
+    if ($user && (await this.validatePassword($user, password)))
+      return this.usersRepository.format($user);
     return null;
   }
 
   async validateJwt(sub: string): Promise<IUser> {
-    const [user] = await this.usersRepository.find({ _id: sub });
-    if (user) return this.usersRepository.format(user);
+    const [userDocument] = await this.usersRepository.find({ _id: sub });
+    const $user: $User = this.usersRepository.toJSON(userDocument);
+    if ($user) return this.usersRepository.format($user);
     return null;
   }
 
@@ -120,8 +132,8 @@ export class AuthService {
     return this.jwtService.sign(accessPayload);
   }
 
-  createRefreshToken(refreshPayload: $RefreshPayload): string {
-    return this.jwtService.sign(refreshPayload, {
+  createRefreshToken($refreshPayload: $RefreshPayload): string {
+    return this.jwtService.sign($refreshPayload, {
       secret: this.configService.get<string>('token.refresh.secret'),
       expiresIn: this.configService.get<number>('token.refresh.expires_in'),
     });
@@ -131,7 +143,10 @@ export class AuthService {
     user: IUser,
     updatePasswordDto: UpdatePasswordDto,
   ): Promise<IAuth> {
-    const [$user]: $User[] = await this.usersRepository.find({ _id: user._id });
+    const [userDocument] = await this.usersRepository.find({
+      _id: user._id,
+    });
+    const $user: $User = this.usersRepository.toJSON(userDocument);
     if (!(await this.validatePassword($user, updatePasswordDto.password)))
       throw new ForbiddenException();
 

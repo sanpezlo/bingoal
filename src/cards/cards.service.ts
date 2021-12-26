@@ -10,6 +10,7 @@ import { CreateCardDto, FindOneCardDto } from '@root/cards/dto/cards.dto';
 import { ICard } from '@root/cards/interfaces/card.interface';
 import { GamesRepository } from '@root/games/games.repository';
 import { $Game } from '@root/games/interfaces/game.interface';
+import { Card } from '@root/cards/schemas/card.schema';
 
 @Injectable()
 export class CardsService {
@@ -22,30 +23,35 @@ export class CardsService {
   async create(createCardDto: CreateCardDto): Promise<ICard> {
     if (!createCardDto.data) createCardDto.data = await this.createData();
 
-    const [card] = await this.cardsRepository.find({
-      data: { $all: createCardDto.data } as unknown as number[],
-    });
-    if (card) return card;
+    const [cardDocument] = await this.cardsRepository.find({
+      data: { $all: createCardDto.data },
+    } as unknown as Partial<Card>);
+    if (cardDocument) return this.cardsRepository.toJSON(cardDocument);
 
-    const newCard = await this.cardsRepository.create({
+    const newCardDocument = await this.cardsRepository.create({
       data: createCardDto.data,
     });
+    const $card = this.cardsRepository.toJSON(newCardDocument);
 
     await this.gamesRepository.update({ played: false, playing: false }, {
-      $push: { cards: newCard },
+      $push: { cards: $card._id },
     } as Partial<$Game>);
 
-    return newCard;
+    return $card;
   }
 
   async find(): Promise<ICard[]> {
-    return await this.cardsRepository.find({});
+    return (await this.cardsRepository.find({})).map((cardDocument) =>
+      this.cardsRepository.toJSON(cardDocument),
+    );
   }
 
   async findOne(findOneCardDto: FindOneCardDto): Promise<ICard> {
-    const [$card] = await this.cardsRepository.find({ _id: findOneCardDto.id });
-    if (!$card) throw new NotFoundException();
-    return $card;
+    const [cardDocument] = await this.cardsRepository.find({
+      _id: findOneCardDto.id,
+    });
+    if (!cardDocument) throw new NotFoundException();
+    return this.cardsRepository.toJSON(cardDocument);
   }
 
   async createData(): Promise<number[]> {

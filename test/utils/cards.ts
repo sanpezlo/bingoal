@@ -10,9 +10,6 @@ export const _cards: Card[] = [
   },
 ];
 
-export async function createCards(
-  cardsRepository: CardsRepository,
-  card: Card,
-) {
-  return await cardsRepository.create(card);
+export async function createCard(cardsRepository: CardsRepository, card: Card) {
+  return cardsRepository.toJSON(await cardsRepository.create(card));
 }

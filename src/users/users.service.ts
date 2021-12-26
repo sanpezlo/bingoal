@@ -35,13 +35,15 @@ export class UsersService {
     );
 
     return this.usersRepository.format(
-      await this.usersRepository.create(createUserDto),
+      this.usersRepository.toJSON(
+        await this.usersRepository.create(createUserDto),
+      ),
     );
   }
 
   async find(): Promise<IUser[]> {
-    return (await this.usersRepository.find({})).map(($user) =>
-      this.usersRepository.format($user),
+    return (await this.usersRepository.find({})).map((userDocument) =>
+      this.usersRepository.format(this.usersRepository.toJSON(userDocument)),
     );
   }
 
@@ -50,15 +52,18 @@ export class UsersService {
   }
 
   async findOne(findOneUserDto: FindOneUserDto): Promise<IUser> {
-    const [$user]: $User[] = await this.usersRepository.find({
+    const [userDocument] = await this.usersRepository.find({
       _id: findOneUserDto.id,
     });
-    if (!$user) throw new NotFoundException();
-    return this.usersRepository.format($user);
+    if (!userDocument) throw new NotFoundException();
+    return this.usersRepository.format(
+      this.usersRepository.toJSON(userDocument),
+    );
   }
 
   async update(user: IUser, updateUserDto: UpdateUserDto): Promise<IUser> {
-    const [$user]: $User[] = await this.usersRepository.find({ _id: user._id });
+    const [userDocument] = await this.usersRepository.find({ _id: user._id });
+    const $user: $User = this.usersRepository.toJSON(userDocument);
     if (
       !(await this.authService.validatePassword($user, updateUserDto.password))
     )

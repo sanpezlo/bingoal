@@ -6,8 +6,8 @@ import * as request from 'supertest';
 import { global } from '@root/global';
 import { imports, close } from '@test/utils/app';
 import { CardsModule } from '@root/cards/cards.module';
-import { createUsers, _users } from '@test/utils/users';
-import { createCards, _cards } from '@test/utils/cards';
+import { createUser, _users } from '@test/utils/users';
+import { createCard, _cards } from '@test/utils/cards';
 import { UsersRepository } from '@root/users/users.repository';
 import { createAccessToken } from '@test/utils/auth';
 import { UsersModule } from '@root/users/users.module';
@@ -31,10 +31,10 @@ describe('CardsController (e2e)', () => {
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
     const [_user] = _users;
-    const $user = await createUsers(usersRepository, _user);
+    const $user = await createUser(usersRepository, _user);
 
     const [_card] = _cards;
-    await createCards(cardssRepository, _card);
+    await createCard(cardssRepository, _card);
 
     token = await createAccessToken(configService, $user._id);
 

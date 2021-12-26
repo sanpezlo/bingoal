@@ -31,13 +31,15 @@ export async function createRefreshToken(
   tokensRepository: TokensRepository,
   id: string,
 ): Promise<string> {
-  const token = await tokensRepository.create({
-    user: id,
-  });
+  const $token = tokensRepository.toJSON(
+    await tokensRepository.create({
+      user: id,
+    }),
+  );
 
   const refreshPayload: $RefreshPayload = {
     sub: id,
-    jti: token._id,
+    jti: $token._id,
   };
 
   return await sign(

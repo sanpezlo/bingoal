@@ -18,17 +18,25 @@ export class GamesService {
   ) {}
 
   async create(): Promise<IGame> {
-    const $cards = await this.cardsRepository.find({});
-    return await this.gamesRepository.create({ cards: $cards });
+    const $cards = (await this.cardsRepository.find({})).map((cardDocument) =>
+      this.cardsRepository.toJSON(cardDocument),
+    );
+    return this.gamesRepository.toJSON(
+      await this.gamesRepository.create({ cards: $cards }),
+    );
   }
 
   async find(): Promise<IGame[]> {
-    return await this.gamesRepository.find({});
+    return (await this.gamesRepository.find({})).map((gameDocument) =>
+      this.gamesRepository.toJSON(gameDocument),
+    );
   }
 
   async findOne(findOneGameDto: FindOneGameDto): Promise<IGame> {
-    const [$game] = await this.gamesRepository.find({ _id: findOneGameDto.id });
-    if (!$game) throw new NotFoundException();
-    return $game;
+    const [gameDocument] = await this.gamesRepository.find({
+      _id: findOneGameDto.id,
+    });
+    if (!gameDocument) throw new NotFoundException();
+    return this.gamesRepository.toJSON(gameDocument);
   }
 }

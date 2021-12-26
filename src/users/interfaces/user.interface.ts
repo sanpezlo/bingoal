@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { User } from '@root/users/schemas/user.schema';
 import { timestamps } from '@root/app/config/database/schema';
+import { Game } from '@root/games/schemas/game.schema';
 
 export enum Role {
   'Admin' = 'Admin',
@@ -28,6 +29,12 @@ export class IUser implements Omit<User, 'password'> {
     example: [],
   })
   roles?: Role[];
+
+  @ApiProperty({
+    required: false,
+    example: [],
+  })
+  games?: Game[] | string[];
 
   @ApiProperty({
     example: new Date(),

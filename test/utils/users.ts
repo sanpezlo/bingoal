@@ -8,14 +8,13 @@ export const _users: User[] = [
   { email: 'example2@mail.com', name: 'example2', password: 'password2' },
 ];
 
-export async function createUsers(
-  usersRepository: UsersRepository,
-  user: User,
-) {
+export async function createUser(usersRepository: UsersRepository, user: User) {
   const salt = await genSalt(10);
 
-  return await usersRepository.create({
-    ...user,
-    password: await hash(user.password, salt),
-  });
+  return usersRepository.toJSON(
+    await usersRepository.create({
+      ...user,
+      password: await hash(user.password, salt),
+    }),
+  );
 }

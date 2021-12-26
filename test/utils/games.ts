@@ -7,9 +7,6 @@ export const _games: Game[] = [
   },
 ];
 
-export async function createCards(
-  gamesRepository: GamesRepository,
-  game: Game,
-) {
-  return await gamesRepository.create(game);
+export async function createGame(gamesRepository: GamesRepository, game: Game) {
+  return gamesRepository.toJSON(await gamesRepository.create(game));
 }

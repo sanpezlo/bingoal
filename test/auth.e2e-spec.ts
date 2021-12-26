@@ -3,7 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as request from 'supertest';
 
-import { createUsers, _users } from '@test/utils/users';
+import { createUser, _users } from '@test/utils/users';
 import { global } from '@root/global';
 import { imports, close } from '@test/utils/app';
 import { AuthModule } from '@root/auth/auth.module';
@@ -26,7 +26,7 @@ describe('AuthController (e2e)', () => {
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
     const [_user] = _users;
-    await createUsers(usersRepository, _user);
+    await createUser(usersRepository, _user);
 
     app = moduleFixture.createNestApplication();
     global(app);
