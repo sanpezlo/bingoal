@@ -12,7 +12,7 @@ export interface $Game extends Required<Game> {
 
 export class IGame implements $Game {
   @ApiProperty({
-    example: 'id',
+    example: '61c2621644e77d67b83d1ff0',
   })
   _id: string;
 
