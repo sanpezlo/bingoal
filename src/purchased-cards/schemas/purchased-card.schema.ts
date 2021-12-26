@@ -4,6 +4,7 @@ import { Document, SchemaTypes } from 'mongoose';
 import { schemaOptions, timestamps } from '@root/app/config/database/schema';
 import { User } from '@root/users/schemas/user.schema';
 import { Card } from '@root/cards/schemas/card.schema';
+import { Game } from '@root/games/schemas/game.schema';
 
 export type PurchasedCardDocument = PurchasedCard & Document;
 
@@ -14,6 +15,9 @@ export class PurchasedCard {
 
   @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'Card' })
   card: Card | string;
+
+  @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'Game' })
+  game: Game | string;
 
   @Prop({
     required: false,
@@ -46,7 +50,7 @@ export class PurchasedCard {
       false,
     ],
   })
-  score: boolean[];
+  score?: boolean[];
 
   @Prop({ required: false, type: Date })
   [timestamps.createdAt]?: Date;

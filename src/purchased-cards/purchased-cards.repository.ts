@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Document, Model } from 'mongoose';
 
 import {
   PurchasedCard,
@@ -15,16 +15,16 @@ export class PurchasedCardsRepository {
     private purchasedCardModel: Model<PurchasedCardDocument>,
   ) {}
 
-  async create(purchasedCard: PurchasedCard): Promise<$PurchasedCard> {
-    return (
-      await this.purchasedCardModel.create(purchasedCard)
-    ).toJSON() as $PurchasedCard;
+  async create(
+    purchasedCard: PurchasedCard,
+  ): Promise<PurchasedCard & Document<any, any, any>> {
+    return await this.purchasedCardModel.create(purchasedCard);
   }
 
-  async find(filter: Partial<$PurchasedCard>): Promise<$PurchasedCard[]> {
-    return (await this.purchasedCardModel.find(filter)).map((purchasedCard) =>
-      purchasedCard.toJSON(),
-    ) as $PurchasedCard[];
+  async find(
+    filter: Partial<$PurchasedCard>,
+  ): Promise<(PurchasedCard & Document<any, any, any>)[]> {
+    return await this.purchasedCardModel.find(filter);
   }
 
   async update(
@@ -36,5 +36,9 @@ export class PurchasedCardsRepository {
 
   async delete(filter: Partial<$PurchasedCard>): Promise<void> {
     await this.purchasedCardModel.deleteMany(filter);
+  }
+
+  toJSON(purchasedCardDocument: PurchasedCard & Document<any, any, any>) {
+    return purchasedCardDocument.toJSON() as $PurchasedCard;
   }
 }

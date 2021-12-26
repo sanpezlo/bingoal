@@ -6,6 +6,7 @@ import { env, envValidation } from '@root/app/config/env/env';
 import { UsersModule } from '@root/users/users.module';
 import { AuthModule } from '@root/auth/auth.module';
 import { CardsModule } from '@root/cards/cards.module';
+import { PurchasedCardsModule } from '@root/purchased-cards/purchased-cards.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CardsModule } from '@root/cards/cards.module';
     UsersModule,
     AuthModule,
     CardsModule,
+    PurchasedCardsModule,
   ],
   controllers: [],
   providers: [],
