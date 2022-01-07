@@ -30,7 +30,7 @@ import { Token, TokenSchema } from '@root/auth/schemas/token.schema';
     }),
   ],
   providers: [TokensRepository, AuthService, LocalStrategy, JwtStrategy],
-  exports: [TokensRepository, AuthService],
+  exports: [TokensRepository, AuthService, JwtStrategy, JwtModule],
   controllers: [AuthController],
 })
 export class AuthModule {}

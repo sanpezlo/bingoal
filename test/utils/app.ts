@@ -19,7 +19,9 @@ export function imports() {
     }),
     MongooseModule.forRootAsync({
       useFactory: async () => {
-        mongoMemoryServer = await MongoMemoryServer.create();
+        mongoMemoryServer = await MongoMemoryServer.create({
+          binary: { version: '4.4.11' },
+        });
         const uri = mongoMemoryServer.getUri();
         return { uri };
       },

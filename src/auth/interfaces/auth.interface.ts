@@ -58,3 +58,20 @@ export class IUnauthorized {
   })
   message: string;
 }
+
+export class IForbidden {
+  @ApiProperty({
+    example: 403,
+  })
+  statusCode: number;
+
+  @ApiProperty({
+    example: 'Forbidden resource',
+  })
+  message: string;
+
+  @ApiProperty({
+    example: 'Forbidden',
+  })
+  error: string;
+}

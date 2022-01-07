@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import {
@@ -16,7 +16,7 @@ import { UsersModule } from '@root/users/users.module';
     MongooseModule.forFeature([
       { name: PurchasedCard.name, schema: PurchasedCardSchema },
     ]),
-    GamesModule,
+    forwardRef(() => GamesModule),
     UsersModule,
   ],
   providers: [PurchasedCardsRepository, PurchasedCardsService],

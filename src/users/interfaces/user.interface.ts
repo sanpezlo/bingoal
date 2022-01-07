@@ -20,7 +20,7 @@ export class IUser implements Omit<User, 'password'> {
   name: string;
 
   @ApiProperty({
-    example: 'example@mail.com  ',
+    example: 'example@mail.com',
   })
   email: string;
 

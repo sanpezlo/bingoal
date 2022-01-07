@@ -49,7 +49,7 @@ export class IGame implements $Game {
   @ApiProperty({
     example: [],
   })
-  remainingBalls: number[];
+  ballsPlayed: number[];
 
   @ApiProperty({
     example: [],

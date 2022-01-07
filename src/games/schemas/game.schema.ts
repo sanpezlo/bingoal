@@ -42,7 +42,7 @@ export class Game {
   balls?: number[];
 
   @Prop({ required: false, type: [Number], default: [] })
-  remainingBalls?: number[];
+  ballsPlayed?: number[];
 
   @Prop({
     required: false,

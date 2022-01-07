@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { IUser } from '@root/users/interfaces/user.interface';
 import {
@@ -21,6 +26,7 @@ import { $Game } from '@root/games/interfaces/game.interface';
 export class PurchasedCardsService {
   constructor(
     private purhcasedCardsRepository: PurchasedCardsRepository,
+    @Inject(forwardRef(() => GamesRepository))
     private gamesRepository: GamesRepository,
     private usersRepository: UsersRepository,
   ) {}
@@ -36,10 +42,10 @@ export class PurchasedCardsService {
           playing: false,
         })
       : await this.gamesRepository.find({ played: false, playing: false });
+    if (!gameDocument) throw new NotFoundException();
     const $game: $Game = this.gamesRepository.toJSON(
       await gameDocument.populate('cards'),
     );
-    if (!$game) throw new NotFoundException();
 
     const $card = ($game.cards as $Card[]).find((card) =>
       createPurchasedCardDto.card
