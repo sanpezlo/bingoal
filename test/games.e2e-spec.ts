@@ -29,7 +29,8 @@ describe('GamesController (e2e)', () => {
   let gamesRepository: GamesRepository;
   let purchasedCardsRepository: PurchasedCardsRepository;
   let configService: ConfigService;
-  let token: string;
+  let token1: string;
+  let token2: string;
   let id: string;
   let id_purchasedCard: string;
 
@@ -46,8 +47,9 @@ describe('GamesController (e2e)', () => {
     );
     configService = moduleFixture.get<ConfigService>(ConfigService);
 
-    const [_user] = _users;
-    const $user = await createUser(usersRepository, _user);
+    const [_user1, _user2] = _users;
+    const $user1 = await createUser(usersRepository, _user1);
+    const $user2 = await createUser(usersRepository, _user2);
 
     const [_card] = _cards;
     const $card = await createCard(cardssRepository, _card);
@@ -59,7 +61,7 @@ describe('GamesController (e2e)', () => {
     _purchasedCards.push({
       card: $card._id,
       game: $game._id,
-      user: $user._id,
+      user: $user1._id,
     });
     const [_purchasedCard] = _purchasedCards;
     id_purchasedCard = (
@@ -70,7 +72,8 @@ describe('GamesController (e2e)', () => {
       )
     )._id;
 
-    token = await createAccessToken(configService, $user._id);
+    token1 = await createAccessToken(configService, $user1._id);
+    token2 = await createAccessToken(configService, $user2._id);
 
     app = moduleFixture.createNestApplication();
     global(app);
@@ -90,11 +93,23 @@ describe('GamesController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
+    test('should return a forbidden exception', () => {
+      return request(app.getHttpServer())
+        .post('/api/v1/games')
+        .set('Authorization', token2)
+        .expect(403)
+        .expect({
+          statusCode: 403,
+          message: 'Forbidden resource',
+          error: 'Forbidden',
+        });
+    });
+
     test('should return the game data', async () => {
       const [, _game] = _games;
       const response = await request(app.getHttpServer())
         .post('/api/v1/games')
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(201);
 
       expect(response.body).toMatchObject(_game);
@@ -114,7 +129,7 @@ describe('GamesController (e2e)', () => {
     test('should return the game data', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/v1/games')
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(200);
 
       expect(response.body).toMatchObject(_games);
@@ -132,7 +147,7 @@ describe('GamesController (e2e)', () => {
     test('should return a bad request exception', () => {
       return request(app.getHttpServer())
         .get(`/api/v1/games/${id.slice(0, -2)}`)
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(400)
         .expect({
           statusCode: 400,
@@ -144,7 +159,7 @@ describe('GamesController (e2e)', () => {
     test('should return a bad request exception', () => {
       return request(app.getHttpServer())
         .get(`/api/v1/games/${id}1`)
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(400)
         .expect({
           statusCode: 400,
@@ -157,7 +172,7 @@ describe('GamesController (e2e)', () => {
       const [, _game] = _games;
       const response = await request(app.getHttpServer())
         .get(`/api/v1/games/${id}`)
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(200);
 
       expect(response.body).toMatchObject(_game);
@@ -190,7 +205,7 @@ describe('GamesController (e2e)', () => {
     test('should be a handshake', (done) => {
       socket = io(baseAddress, {
         extraHeaders: {
-          Authorization: token,
+          Authorization: token1,
         },
       });
 
@@ -222,10 +237,22 @@ describe('GamesController (e2e)', () => {
         .expect({ statusCode: 401, message: 'Unauthorized' });
     });
 
+    test('should return a forbidden exception', () => {
+      return request(app.getHttpServer())
+        .post(`/api/v1/games/ball/${id}`)
+        .set('Authorization', token2)
+        .expect(403)
+        .expect({
+          statusCode: 403,
+          message: 'Forbidden resource',
+          error: 'Forbidden',
+        });
+    });
+
     test('should return a bad request exception', () => {
       return request(app.getHttpServer())
         .post(`/api/v1/games/ball/${id.slice(0, -2)}`)
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(400)
         .expect({
           statusCode: 400,
@@ -237,7 +264,7 @@ describe('GamesController (e2e)', () => {
     test('should return a bad request exception', () => {
       return request(app.getHttpServer())
         .post(`/api/v1/games/ball/${id}1`)
-        .set('Authorization', token)
+        .set('Authorization', token1)
         .expect(400)
         .expect({
           statusCode: 400,
@@ -270,7 +297,7 @@ describe('GamesController (e2e)', () => {
           if (!_game.played) {
             const response = await request(app.getHttpServer())
               .post(`/api/v1/games/ball/${id}`)
-              .set('Authorization', token)
+              .set('Authorization', token1)
               .expect(201);
 
             expect(response.body).toMatchObject(_game);
@@ -279,7 +306,7 @@ describe('GamesController (e2e)', () => {
           } else
             return request(app.getHttpServer())
               .post(`/api/v1/games/ball/${id}`)
-              .set('Authorization', token)
+              .set('Authorization', token1)
               .expect(404)
               .expect({ statusCode: 404, message: 'Not Found' });
         });
