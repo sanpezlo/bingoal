@@ -5,6 +5,9 @@ export const _games: Game[] = [
   {
     cards: [],
   },
+  {
+    cards: [],
+  },
 ];
 
 export async function createGame(gamesRepository: GamesRepository, game: Game) {
