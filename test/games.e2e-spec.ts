@@ -198,6 +198,7 @@ describe('GamesController (e2e)', () => {
     test('should not be a handshake', (done) => {
       socket = io(baseAddress);
       socket.on('connect_error', function () {
+        socket.close();
         done();
       });
     });
