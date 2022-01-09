@@ -40,3 +40,7 @@ lerna-debug.log*
 # ENV
 .env
 .env.*
+
+# REST
+*.http
+*.rest
