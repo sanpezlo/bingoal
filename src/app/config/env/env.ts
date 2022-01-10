@@ -4,7 +4,7 @@ import { validateSync } from 'class-validator';
 import { EnvironmentVariables } from '@root/app/config/env/env.validation';
 
 export const env = () => ({
-  port: parseInt(process.env.PORT, 10) || 3000,
+  port: parseInt(process.env.PORT, 10) || 80,
   mongo: {
     uri: process.env.MONGO_URI,
   },
