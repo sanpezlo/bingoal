@@ -1,29 +1,38 @@
 version: "3.8"
 services:
-  bingoal-mongodb:
-    container_name: bingoal-mongodb
-    image: mongo:4.4
+  bingoal-dev-mongodb:
+    container_name: bingoal-dev-mongodb
+    image: mongo:4.4    
     environment:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     networks:
-      - bingoal_network
-  bingoal-api:
-    container_name: bingoal-api
-    build: .
+      - bingoal-dev_network
+  bingoal-dev-api:
+    container_name: bingoal-dev-api
+    image: node:16.13.1-alpine3.15
+    expose:
+      - 80
     environment:
-      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@bingoal-mongodb:27017
+      - NODE_ENV=development
+      - PORT=80
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@bingoal-dev-mongodb:27017
       - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
       - ACCESS_TOKEN_EXPIRES_IN=${ACCESS_TOKEN_EXPIRES_IN}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
       - REFRESH_TOKEN_EXPIRES_IN=${REFRESH_TOKEN_EXPIRES_IN}
+    working_dir: /usr/src/app
     ports:
       - 80:80
+    volumes:
+      - ./:/usr/src/app
+      - ./node_modules:/usr/src/app/node_modules
     depends_on:
-      - bingoal-mongodb
+      - bingoal-dev-mongodb
     networks:
-      - bingoal_network
+      - bingoal-dev_network
+    command: npm run start:dev
 networks:
-  bingoal_network:
+  bingoal-dev_network:
     driver: bridge
-    name: bingoal_network
+    name: bingoal-dev_network

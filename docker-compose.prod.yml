@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  bingoal-mongodb:
+    container_name: bingoal-mongodb
+    image: mongo:4.4
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - bingoal_network
+  bingoal-api:
+    container_name: bingoal-api
+    image: sanpezlo/bingoal-api
+    environment:
+      - MONGO_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@bingoal-mongodb:27017
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - ACCESS_TOKEN_EXPIRES_IN=${ACCESS_TOKEN_EXPIRES_IN}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      - REFRESH_TOKEN_EXPIRES_IN=${REFRESH_TOKEN_EXPIRES_IN}
+    ports:
+      - 80:80
+    depends_on:
+      - bingoal-mongodb
+    networks:
+      - bingoal_network
+networks:
+  bingoal_network:
+    driver: bridge
+    name: bingoal_network
