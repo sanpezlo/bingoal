@@ -106,17 +106,18 @@ export class AuthService {
 
   async validateLocal(email: string, password: string): Promise<IUser> {
     const [userDocument] = await this.usersRepository.find({ email });
+    if (!userDocument) return null;
     const $user: $User = this.usersRepository.toJSON(userDocument);
-    if ($user && (await this.validatePassword($user, password)))
+    if (await this.validatePassword($user, password))
       return this.usersRepository.format($user);
     return null;
   }
 
   async validateJwt(sub: string): Promise<IUser> {
     const [userDocument] = await this.usersRepository.find({ _id: sub });
+    if (!userDocument) return null;
     const $user: $User = this.usersRepository.toJSON(userDocument);
-    if ($user) return this.usersRepository.format($user);
-    return null;
+    return this.usersRepository.format($user);
   }
 
   async validatePassword(user: $User, password: string): Promise<boolean> {

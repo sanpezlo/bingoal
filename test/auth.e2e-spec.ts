@@ -58,8 +58,8 @@ describe('AuthController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/v1/auth/login')
         .send({
-          email: _user.email,
-          password: '',
+          email: _user.email + '.co',
+          password: _user.password,
         })
         .expect(401)
         .expect({ statusCode: 401, message: 'Unauthorized' });
