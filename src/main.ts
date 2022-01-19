@@ -8,12 +8,14 @@ import { global } from '@root/global';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+  if (configService.get<string>('node.env') === 'development')
+    app.enableCors({ origin: '*' });
 
   global(app);
 
   const config = new DocumentBuilder()
     .setTitle('Bingoal API')
-    .setVersion('1.0.0')
+    .setVersion('1.0.1')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
