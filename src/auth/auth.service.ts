@@ -63,7 +63,7 @@ export class AuthService {
       const $refreshPayload = this.jwtService.verify<$RefreshPayload>(
         refreshDto.refresh,
         {
-          secret: this.configService.get<string>('token.access.secret'),
+          secret: this.configService.get<string>('token.refresh.secret'),
           ignoreExpiration: false,
         },
       );
@@ -92,13 +92,9 @@ export class AuthService {
         ),
       };
     } catch (error) {
-      const $refreshPayload = this.jwtService.verify<$RefreshPayload>(
+      const $refreshPayload = this.jwtService.decode(
         refreshDto.refresh,
-        {
-          secret: this.configService.get<string>('token.access.secret'),
-          ignoreExpiration: true,
-        },
-      );
+      ) as $RefreshPayload;
       await this.tokensRepository.delete({ _id: $refreshPayload.jti });
       throw new BadRequestException(['refresh must be a valid jwt string']);
     }

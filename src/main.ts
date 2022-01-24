@@ -15,7 +15,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Bingoal API')
-    .setVersion('1.0.1')
+    .setVersion('1.0.2')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
