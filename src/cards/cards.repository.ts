@@ -15,8 +15,10 @@ export class CardsRepository {
 
   async find(
     filter: Partial<$Card>,
+    skip = 0,
+    limit = 20,
   ): Promise<(Card & Document<any, any, any>)[]> {
-    return await this.cardModel.find(filter);
+    return await this.cardModel.find(filter).skip(skip).limit(limit);
   }
 
   toJSON(cardDocument: Card & Document<any, any, any>) {

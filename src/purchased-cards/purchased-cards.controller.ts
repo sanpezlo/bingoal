@@ -1,4 +1,4 @@
-import { Version, Post, Body, Get, Param } from '@nestjs/common';
+import { Version, Post, Body, Get, Param, Query } from '@nestjs/common';
 
 import { Controller } from '@root/app/decorators/controller.decorator';
 import { PurchasedCardsService } from '@root/purchased-cards/purchased-cards.service';
@@ -8,6 +8,7 @@ import { IUser } from '@root/users/interfaces/user.interface';
 import {
   CreatePurchasedCardDto,
   FindOnePurchasedCardDto,
+  FindPurchasedCardsDto,
 } from '@root/purchased-cards/dto/purchased-cards.dto';
 
 @Controller('purchased-cards')
@@ -27,8 +28,8 @@ export class PurchasedCardsController {
   @Version('1')
   @Auth()
   @Get()
-  async find() {
-    return this.purhcasedCardsService.find();
+  async find(@Query() findPurchasedCardsDto: FindPurchasedCardsDto) {
+    return this.purhcasedCardsService.find(findPurchasedCardsDto);
   }
 
   @Version('1')

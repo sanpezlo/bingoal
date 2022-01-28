@@ -9,7 +9,11 @@ import { Document } from 'mongoose';
 import { CardsRepository } from '@root/cards/cards.repository';
 import { GamesRepository } from '@root/games/games.repository';
 import { IGame } from '@root/games/interfaces/game.interface';
-import { CreateBallGameDto, FindOneGameDto } from '@root/games/dto/games.dto';
+import {
+  CreateBallGameDto,
+  FindGamesDto,
+  FindOneGameDto,
+} from '@root/games/dto/games.dto';
 import { GamesGateway } from '@root/games/games.gateway';
 import { PurchasedCard } from '@root/purchased-cards/schemas/purchased-card.schema';
 import { Card } from '@root/cards/schemas/card.schema';
@@ -36,10 +40,14 @@ export class GamesService {
     );
   }
 
-  async find(): Promise<IGame[]> {
-    return (await this.gamesRepository.find({})).map((gameDocument) =>
-      this.gamesRepository.toJSON(gameDocument),
-    );
+  async find(findGamesDto: FindGamesDto): Promise<IGame[]> {
+    return (
+      await this.gamesRepository.find(
+        {},
+        findGamesDto.offset,
+        findGamesDto.limit,
+      )
+    ).map((gameDocument) => this.gamesRepository.toJSON(gameDocument));
   }
 
   async findOne(findOneGameDto: FindOneGameDto): Promise<IGame> {

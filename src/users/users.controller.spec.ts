@@ -5,6 +5,7 @@ import { UsersService } from '@root/users/users.service';
 import {
   CreateUserDto,
   FindOneUserDto,
+  FindUsersDto,
   UpdateUserDto,
 } from '@root/users/dto/users.dto';
 import { IUser } from '@root/users/interfaces/user.interface';
@@ -46,8 +47,9 @@ describe('UsersController', () => {
   });
 
   it('should be called find method', () => {
-    usersController.find();
-    expect(spyService.find).toHaveBeenCalled();
+    const findUsersDto = new FindUsersDto();
+    usersController.find(findUsersDto);
+    expect(spyService.find).toHaveBeenCalledWith(findUsersDto);
   });
 
   it('should be called findOne method', () => {

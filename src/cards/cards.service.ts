@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 
 import { CardsRepository } from '@root/cards/cards.repository';
-import { CreateCardDto, FindOneCardDto } from '@root/cards/dto/cards.dto';
+import {
+  CreateCardDto,
+  FindCardsDto,
+  FindOneCardDto,
+} from '@root/cards/dto/cards.dto';
 import { ICard } from '@root/cards/interfaces/card.interface';
 import { GamesRepository } from '@root/games/games.repository';
 import { $Game } from '@root/games/interfaces/game.interface';
@@ -40,10 +44,14 @@ export class CardsService {
     return $card;
   }
 
-  async find(): Promise<ICard[]> {
-    return (await this.cardsRepository.find({})).map((cardDocument) =>
-      this.cardsRepository.toJSON(cardDocument),
-    );
+  async find(findCardsDto: FindCardsDto): Promise<ICard[]> {
+    return (
+      await this.cardsRepository.find(
+        {},
+        findCardsDto.offset,
+        findCardsDto.limit,
+      )
+    ).map((cardDocument) => this.cardsRepository.toJSON(cardDocument));
   }
 
   async findOne(findOneCardDto: FindOneCardDto): Promise<ICard> {

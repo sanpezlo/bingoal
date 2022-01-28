@@ -1,4 +1,4 @@
-import { Version, Post, Body, Get, Param, Put } from '@nestjs/common';
+import { Version, Post, Body, Get, Param, Put, Query } from '@nestjs/common';
 
 import { Controller } from '@root/app/decorators/controller.decorator';
 import { UsersService } from '@root/users/users.service';
@@ -6,6 +6,7 @@ import { Auth } from '@root/app/decorators/auth.decorator';
 import {
   CreateUserDto,
   FindOneUserDto,
+  FindUsersDto,
   UpdateUserDto,
 } from '@root/users/dto/users.dto';
 import { User } from '@root/app/decorators/user.decorator';
@@ -24,8 +25,8 @@ export class UsersController {
   @Version('1')
   @Auth()
   @Get()
-  async find() {
-    return this.usersService.find();
+  async find(@Query() findUserDto: FindUsersDto) {
+    return this.usersService.find(findUserDto);
   }
 
   @Version('1')

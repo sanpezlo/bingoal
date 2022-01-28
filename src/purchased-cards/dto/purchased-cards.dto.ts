@@ -1,5 +1,13 @@
-import { IsString, MaxLength, MinLength, IsOptional } from 'class-validator';
+import {
+  IsString,
+  MaxLength,
+  MinLength,
+  IsOptional,
+  IsNotEmpty,
+  IsNumber,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class CreatePurchasedCardDto {
   @IsString()
@@ -21,6 +29,32 @@ export class CreatePurchasedCardDto {
     example: '61c2621644e77d67b83d1ff0',
   })
   game?: string;
+}
+
+export class FindPurchasedCardsDto {
+  @Transform(({ value }) => parseInt(value))
+  @IsNotEmpty()
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    required: false,
+    example: 0,
+  })
+  offset?: number = 0;
+
+  @Transform(({ value }) => {
+    const newValue = parseInt(value);
+    if (newValue >= 20) return 20;
+    return newValue;
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    required: false,
+    example: 20,
+  })
+  limit?: number = 20;
 }
 
 export class FindOnePurchasedCardDto {

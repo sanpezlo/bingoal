@@ -10,10 +10,12 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  IsNumber,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { Card } from '@root/cards/schemas/card.schema';
+import { Transform } from 'class-transformer';
 
 @ValidatorConstraint({ name: 'customData', async: false })
 export class CustomData implements ValidatorConstraintInterface {
@@ -60,6 +62,32 @@ export class CreateCardDto implements Partial<Card> {
     ],
   })
   data?: number[];
+}
+
+export class FindCardsDto {
+  @Transform(({ value }) => parseInt(value))
+  @IsNotEmpty()
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    required: false,
+    example: 0,
+  })
+  offset?: number = 0;
+
+  @Transform(({ value }) => {
+    const newValue = parseInt(value);
+    if (newValue >= 20) return 20;
+    return newValue;
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    required: false,
+    example: 20,
+  })
+  limit?: number = 20;
 }
 
 export class FindOneCardDto {

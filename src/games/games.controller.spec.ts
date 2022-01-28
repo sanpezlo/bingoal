@@ -3,7 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { GamesController } from '@root/games/games.controller';
 import { GamesService } from '@root/games/games.service';
-import { CreateBallGameDto, FindOneGameDto } from '@root/games/dto/games.dto';
+import {
+  CreateBallGameDto,
+  FindGamesDto,
+  FindOneGameDto,
+} from '@root/games/dto/games.dto';
 
 describe('GamesController', () => {
   let gamesController: GamesController;
@@ -40,8 +44,9 @@ describe('GamesController', () => {
   });
 
   it('should be called find method', () => {
-    gamesController.find();
-    expect(spyService.find).toHaveBeenCalled();
+    const findGamesDto = new FindGamesDto();
+    gamesController.find(findGamesDto);
+    expect(spyService.find).toHaveBeenCalledWith(findGamesDto);
   });
 
   it('should be called findOne method', () => {

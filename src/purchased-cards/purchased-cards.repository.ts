@@ -23,8 +23,10 @@ export class PurchasedCardsRepository {
 
   async find(
     filter: Partial<$PurchasedCard>,
+    skip = 0,
+    limit = 20,
   ): Promise<(PurchasedCard & Document<any, any, any>)[]> {
-    return await this.purchasedCardModel.find(filter);
+    return await this.purchasedCardModel.find(filter).skip(skip).limit(limit);
   }
 
   async update(

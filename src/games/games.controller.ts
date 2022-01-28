@@ -1,9 +1,13 @@
-import { Version, Post, Get, Param } from '@nestjs/common';
+import { Version, Post, Get, Param, Query } from '@nestjs/common';
 import { Auth } from '@root/app/decorators/auth.decorator';
 
 import { Controller } from '@root/app/decorators/controller.decorator';
 import { GamesService } from '@root/games/games.service';
-import { CreateBallGameDto, FindOneGameDto } from '@root/games/dto/games.dto';
+import {
+  CreateBallGameDto,
+  FindGamesDto,
+  FindOneGameDto,
+} from '@root/games/dto/games.dto';
 import { Role } from '@root/users/interfaces/user.interface';
 
 @Controller('games')
@@ -20,8 +24,8 @@ export class GamesController {
   @Version('1')
   @Auth()
   @Get()
-  async find() {
-    return this.gamesService.find();
+  async find(@Query() findGamesDto: FindGamesDto) {
+    return this.gamesService.find(findGamesDto);
   }
 
   @Version('1')

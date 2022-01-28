@@ -13,6 +13,7 @@ import {
 import { PurchasedCardsRepository } from '@root/purchased-cards/purchased-cards.repository';
 import {
   CreatePurchasedCardDto,
+  FindPurchasedCardsDto,
   FindOnePurchasedCardDto,
 } from '@root/purchased-cards/dto/purchased-cards.dto';
 import { GamesRepository } from '@root/games/games.repository';
@@ -84,10 +85,17 @@ export class PurchasedCardsService {
     return $purchasedCard;
   }
 
-  async find(): Promise<IPurchasedCard[]> {
-    return (await this.purhcasedCardsRepository.find({})).map(
-      (purchasedCardDocument) =>
-        this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
+  async find(
+    findPurchasedCardsDto: FindPurchasedCardsDto,
+  ): Promise<IPurchasedCard[]> {
+    return (
+      await this.purhcasedCardsRepository.find(
+        {},
+        findPurchasedCardsDto.offset,
+        findPurchasedCardsDto.limit,
+      )
+    ).map((purchasedCardDocument) =>
+      this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
     );
   }
 

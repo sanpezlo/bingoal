@@ -7,6 +7,7 @@ import { IUser } from '@root/users/interfaces/user.interface';
 import {
   CreatePurchasedCardDto,
   FindOnePurchasedCardDto,
+  FindPurchasedCardsDto,
 } from '@root/purchased-cards/dto/purchased-cards.dto';
 
 describe('PurchasedCardsController', () => {
@@ -50,8 +51,9 @@ describe('PurchasedCardsController', () => {
   });
 
   it('should be called find method', () => {
-    purchasedCardsController.find();
-    expect(spyService.find).toHaveBeenCalled();
+    const findPurchasedCardsDto = new FindPurchasedCardsDto();
+    purchasedCardsController.find(findPurchasedCardsDto);
+    expect(spyService.find).toHaveBeenCalledWith(findPurchasedCardsDto);
   });
 
   it('should be called findOne method', () => {

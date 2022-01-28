@@ -1,6 +1,6 @@
 {
   "name": "bingoal-api",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "",
   "author": "",
   "private": true,
@@ -18,7 +18,8 @@
     "test:watch": "cross-env NODE_ENV=test jest --watch --detectOpenHandles",
     "test:cov": "cross-env NODE_ENV=tes jest --coverage --detectOpenHandles",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand --detectOpenHandles",
-    "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --detectOpenHandles"
+    "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --detectOpenHandles",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@nestjs/common": "^8.2.4",

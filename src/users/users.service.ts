@@ -10,6 +10,7 @@ import { UsersRepository } from '@root/users/users.repository';
 import {
   CreateUserDto,
   FindOneUserDto,
+  FindUsersDto,
   UpdateUserDto,
 } from '@root/users/dto/users.dto';
 import { $User, IUser } from '@root/users/interfaces/user.interface';
@@ -41,8 +42,10 @@ export class UsersService {
     );
   }
 
-  async find(): Promise<IUser[]> {
-    return (await this.usersRepository.find({})).map((userDocument) =>
+  async find(findUserDto: FindUsersDto): Promise<IUser[]> {
+    return (
+      await this.usersRepository.find({}, findUserDto.offset, findUserDto.limit)
+    ).map((userDocument) =>
       this.usersRepository.format(this.usersRepository.toJSON(userDocument)),
     );
   }

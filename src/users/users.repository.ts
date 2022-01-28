@@ -15,8 +15,10 @@ export class UsersRepository {
 
   async find(
     filter: Partial<$User>,
+    skip = 0,
+    limit = 20,
   ): Promise<(User & Document<any, any, any>)[]> {
-    return await this.userModel.find(filter);
+    return await this.userModel.find(filter).skip(skip).limit(limit);
   }
 
   async update(filter: Partial<$User>, update: Partial<User>): Promise<void> {

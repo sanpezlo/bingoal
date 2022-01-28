@@ -15,8 +15,10 @@ export class GamesRepository {
 
   async find(
     filter: Partial<$Game>,
+    skip = 0,
+    limit = 20,
   ): Promise<(Game & Document<any, any, any>)[]> {
-    return await this.gameModel.find(filter);
+    return await this.gameModel.find(filter).skip(skip).limit(limit);
   }
 
   async update(filter: Partial<$Game>, update: Partial<Game>): Promise<void> {
