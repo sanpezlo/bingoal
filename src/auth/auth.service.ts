@@ -19,6 +19,7 @@ import { TokensRepository } from '@root/auth/tokens.repository';
 import { UsersRepository } from '@root/users/users.repository';
 import { IUser, $User } from '@root/users/interfaces/user.interface';
 import { RefreshDto, UpdatePasswordDto } from '@root/auth/dto/auth.dto';
+import { Observable, from, switchMap } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -120,9 +121,19 @@ export class AuthService {
     return await compare(password, user.password);
   }
 
+  rxValidatePassword(user: $User, password: string): Observable<boolean> {
+    return from(compare(password, user.password));
+  }
+
   async hash(password: string): Promise<string> {
     const salt = await genSalt(10);
     return await hash(password, salt);
+  }
+
+  rxHash(password: string): Observable<string> {
+    return from(genSalt(10)).pipe(
+      switchMap((salt) => from(hash(password, salt))),
+    );
   }
 
   createAccessToken(accessPayload: $AccessPayload): string {
