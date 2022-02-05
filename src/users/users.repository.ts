@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
+import { Observable, from } from 'rxjs';
 
 import { User, UserDocument } from '@root/users/schemas/user.schema';
 import { $User, IUser } from '@root/users/interfaces/user.interface';
-import { Observable, from } from 'rxjs';
 
 @Injectable()
 export class UsersRepository {

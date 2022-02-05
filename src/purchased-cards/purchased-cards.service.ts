@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { tap, switchMap, from, map, of, toArray, Observable } from 'rxjs';
 
 import { IUser } from '@root/users/interfaces/user.interface';
 import {
@@ -32,80 +33,101 @@ export class PurchasedCardsService {
     private usersRepository: UsersRepository,
   ) {}
 
-  async create(
+  create(
     createPurchasedCardDto: CreatePurchasedCardDto,
     user: IUser,
-  ): Promise<IPurchasedCard> {
-    const [gameDocument] = createPurchasedCardDto.game
-      ? await this.gamesRepository.find({
-          _id: createPurchasedCardDto.game,
-          played: false,
-          playing: false,
-        })
-      : await this.gamesRepository.find({ played: false, playing: false });
-    if (!gameDocument) throw new NotFoundException();
-    const $game: $Game = this.gamesRepository.toJSON(
-      await gameDocument.populate('cards'),
-    );
-
-    const $card = ($game.cards as $Card[]).find((card) =>
-      createPurchasedCardDto.card
-        ? `${card._id}` === `${createPurchasedCardDto.card}`
-        : card,
-    );
-    if (!$card) throw new NotFoundException();
-
-    if (
-      !(user.games as string[]).find((game) => `${game}` === `${$game._id}`)
-    ) {
-      await this.usersRepository.update({ _id: user._id }, {
-        $push: {
-          games: $game._id,
-        },
-      } as Partial<User>);
-    }
-
-    const $purchasedCard: $PurchasedCard = this.purhcasedCardsRepository.toJSON(
-      await this.purhcasedCardsRepository.create({
-        user: user._id,
-        card: $card._id,
-        game: $game._id,
-      }),
-    );
-
-    await this.gamesRepository.update({ _id: $game._id }, {
-      $push: {
-        purchasedCards: $purchasedCard._id,
-      },
-      $pull: {
-        cards: $card._id,
-      },
-    } as Partial<Game>);
-
-    return $purchasedCard;
+  ): Observable<IPurchasedCard> {
+    return this.gamesRepository
+      .rxFind({
+        played: false,
+        playing: false,
+        ...(createPurchasedCardDto.game
+          ? { _id: createPurchasedCardDto.game }
+          : {}),
+      })
+      .pipe(
+        tap(([gameDocument]) => {
+          if (!gameDocument) throw new NotFoundException();
+        }),
+        switchMap(([gameDocument]) => from(gameDocument.populate('cards'))),
+        map((gameDocument) => this.gamesRepository.toJSON(gameDocument)),
+        switchMap(($game: $Game) =>
+          of(
+            ($game.cards as $Card[]).find(($card) =>
+              createPurchasedCardDto.card
+                ? `${$card._id}` === `${createPurchasedCardDto.card}`
+                : $card,
+            ),
+          ).pipe(
+            tap(($card) => {
+              if (!$card) throw new NotFoundException();
+              if (
+                !(user.games as string[]).find(
+                  (game) => `${game}` === `${$game._id}`,
+                )
+              )
+                this.usersRepository.rxUpdate({ _id: user._id }, {
+                  $push: {
+                    games: $game._id,
+                  },
+                } as Partial<User>);
+            }),
+            switchMap(($card) =>
+              this.purhcasedCardsRepository.rxCreate({
+                user: user._id,
+                card: $card._id,
+                game: $game._id,
+              }),
+            ),
+            map((purchasedCardDocument) =>
+              this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
+            ),
+          ),
+        ),
+        tap(($purchasedCard: $PurchasedCard) => {
+          this.gamesRepository.rxUpdate(
+            { _id: $purchasedCard.game as string },
+            {
+              $push: {
+                purchasedCards: $purchasedCard._id,
+              },
+              $pull: {
+                cards: $purchasedCard.card,
+              },
+            } as Partial<Game>,
+          );
+        }),
+      );
   }
 
-  async find(
+  find(
     findPurchasedCardsDto: FindPurchasedCardsDto,
-  ): Promise<IPurchasedCard[]> {
-    return (
-      await this.purhcasedCardsRepository.find(
-        {},
-        findPurchasedCardsDto.offset,
-        findPurchasedCardsDto.limit,
-      )
-    ).map((purchasedCardDocument) =>
-      this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
-    );
+  ): Observable<IPurchasedCard[]> {
+    return this.purhcasedCardsRepository
+      .rxFind({}, findPurchasedCardsDto.offset, findPurchasedCardsDto.limit)
+      .pipe(
+        switchMap((purchasedCardsDocument) => from(purchasedCardsDocument)),
+        map((purchasedCardDocument) =>
+          this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
+        ),
+        toArray(),
+      );
   }
 
-  async findOne(
+  findOne(
     findOnePurchasedCardDto: FindOnePurchasedCardDto,
-  ): Promise<IPurchasedCard> {
-    const [purchasedCardDocument] = await this.purhcasedCardsRepository.find({
-      _id: findOnePurchasedCardDto.id,
-    });
-    if (!purchasedCardDocument) throw new NotFoundException();
-    return this.purhcasedCardsRepository.toJSON(purchasedCardDocument);
+  ): Observable<IPurchasedCard> {
+    return this.purhcasedCardsRepository
+      .rxFind({
+        _id: findOnePurchasedCardDto.id,
+      })
+      .pipe(
+        tap(([purchasedCardDocument]) => {
+          if (!purchasedCardDocument) throw new NotFoundException();
+        }),
+        map(([purchasedCardDocument]) =>
+          this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
+        ),
+      );
   }
 }
