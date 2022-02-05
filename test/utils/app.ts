@@ -13,14 +13,14 @@ export const close = async () => {
 export function imports() {
   return [
     ConfigModule.forRoot({
-      envFilePath: [`.env.${process.env.NODE_ENV}`, '.env'],
+      envFilePath: [`.env.${process.env.NODE_ENV}`, '.env', '.env.example'],
       load: [env],
       validate: envValidation,
     }),
     MongooseModule.forRootAsync({
       useFactory: async () => {
         mongoMemoryServer = await MongoMemoryServer.create({
-          binary: { version: '4.4.11' },
+          binary: { version: process.env.MONGOMS_VERSION || undefined },
         });
         const uri = mongoMemoryServer.getUri();
         return { uri };
