@@ -15,7 +15,7 @@ import {
 } from '@root/users/dto/users.dto';
 import { $User, IUser } from '@root/users/interfaces/user.interface';
 import { AuthService } from '@root/auth/auth.service';
-import { Observable, tap, switchMap, from, map, toArray } from 'rxjs';
+import { Observable, tap, concatMap, from, map, toArray } from 'rxjs';
 
 @Injectable()
 export class UsersService {
@@ -30,8 +30,8 @@ export class UsersService {
       tap((usersDocument) => {
         if (usersDocument.length) throw new ForbiddenException();
       }),
-      switchMap(() => this.authService.rxHash(createUserDto.password)),
-      switchMap((hashed: string) =>
+      concatMap(() => this.authService.rxHash(createUserDto.password)),
+      concatMap((hashed: string) =>
         this.usersRepository.rxCreate({
           ...createUserDto,
           password: hashed,
@@ -46,7 +46,7 @@ export class UsersService {
     return this.usersRepository
       .rxFind({}, findUsersDto.offset, findUsersDto.limit)
       .pipe(
-        switchMap((usersDocument) => from(usersDocument)),
+        concatMap((usersDocument) => from(usersDocument)),
         map((userDocument) => this.usersRepository.toJSON(userDocument)),
         map(($user: $User) => this.usersRepository.format($user)),
         toArray(),
@@ -70,13 +70,13 @@ export class UsersService {
   update(user: IUser, updateUserDto: UpdateUserDto): Observable<IUser> {
     return this.usersRepository.rxFind({ _id: user._id }).pipe(
       map(([userDocument]) => this.usersRepository.toJSON(userDocument)),
-      switchMap(($user: $User) =>
+      concatMap(($user: $User) =>
         this.authService.rxValidatePassword($user, updateUserDto.password),
       ),
       tap((isValidPassword: boolean) => {
         if (!isValidPassword) throw new ForbiddenException();
       }),
-      switchMap(() =>
+      concatMap(() =>
         this.usersRepository.rxFind({ email: updateUserDto.email }),
       ),
       tap((usersDocument) => {
@@ -86,7 +86,7 @@ export class UsersService {
         this.usersRepository.rxUpdate({ _id: user._id }, update);
       }),
       map(() => ({ id: user._id })),
-      switchMap((findOneUserDto) => this.findOne(findOneUserDto)),
+      concatMap((findOneUserDto) => this.findOne(findOneUserDto)),
     );
   }
 }

@@ -14,6 +14,10 @@ export class GamesRepository {
     return await this.gameModel.create(game);
   }
 
+  rxCreate(game: Game): Observable<Game & Document<any, any, any>> {
+    return from(this.gameModel.create(game));
+  }
+
   async find(
     filter: Partial<$Game>,
     skip = 0,
@@ -42,6 +46,10 @@ export class GamesRepository {
 
   async delete(filter: Partial<$Game>): Promise<void> {
     await this.gameModel.deleteMany(filter);
+  }
+
+  rxDelete(filter: Partial<$Game>): void {
+    from(this.gameModel.deleteMany(filter)).subscribe();
   }
 
   toJSON(gameDocument: Game & Document<any, any, any>) {

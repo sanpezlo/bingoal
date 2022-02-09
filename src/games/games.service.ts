@@ -5,6 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Document } from 'mongoose';
+import {
+  Observable,
+  from,
+  map,
+  toArray,
+  tap,
+  of,
+  filter,
+  switchMap,
+  delayWhen,
+} from 'rxjs';
 
 import { CardsRepository } from '@root/cards/cards.repository';
 import { GamesRepository } from '@root/games/games.repository';
@@ -31,117 +42,151 @@ export class GamesService {
     private gamesGateway: GamesGateway,
   ) {}
 
-  async create(): Promise<IGame> {
-    const $cards = (await this.cardsRepository.find({})).map((cardDocument) =>
-      this.cardsRepository.toJSON(cardDocument),
-    );
-    return this.gamesRepository.toJSON(
-      await this.gamesRepository.create({ cards: $cards }),
+  create(): Observable<IGame> {
+    return this.cardsRepository.rxFind({}).pipe(
+      switchMap((cardsDocument) => from(cardsDocument)),
+      map((cardDocument) => this.cardsRepository.toJSON(cardDocument)),
+      toArray(),
+      switchMap(($cards) => this.gamesRepository.rxCreate({ cards: $cards })),
+      map((gameDocument) => this.gamesRepository.toJSON(gameDocument)),
     );
   }
 
-  async find(findGamesDto: FindGamesDto): Promise<IGame[]> {
-    return (
-      await this.gamesRepository.find(
-        {},
-        findGamesDto.offset,
-        findGamesDto.limit,
-      )
-    ).map((gameDocument) => this.gamesRepository.toJSON(gameDocument));
+  find(findGamesDto: FindGamesDto): Observable<IGame[]> {
+    return this.gamesRepository
+      .rxFind({}, findGamesDto.offset, findGamesDto.limit)
+      .pipe(
+        switchMap((gamesDocument) => from(gamesDocument)),
+        map((gameDocument) => this.gamesRepository.toJSON(gameDocument)),
+        toArray(),
+      );
   }
 
-  async findOne(findOneGameDto: FindOneGameDto): Promise<IGame> {
-    const [gameDocument] = await this.gamesRepository.find({
-      _id: findOneGameDto.id,
-    });
-    if (!gameDocument) throw new NotFoundException();
-    return this.gamesRepository.toJSON(gameDocument);
-  }
-
-  async createBall(createBallGameDto: CreateBallGameDto): Promise<IGame> {
-    const [gameDocument] = await this.gamesRepository.find({
-      _id: createBallGameDto.id,
-      played: false,
-    });
-    if (!gameDocument) throw new NotFoundException();
-
-    const gameDocumentPopulated = await gameDocument.populate({
-      path: 'purchasedCards',
-      populate: {
-        path: 'card',
-      },
-    });
-
-    if (!gameDocument.playing)
-      this.gamesGateway.emitGame(gameDocument._id.toString(), {
-        playing: true,
-      });
-
-    const indexRemainingBall = Math.floor(
-      Math.random() * gameDocument.balls.length,
+  findOne(findOneGameDto: FindOneGameDto) {
+    return this.gamesRepository.rxFind({ _id: findOneGameDto.id }).pipe(
+      tap(([gameDocument]) => {
+        if (!gameDocument) throw new NotFoundException();
+      }),
+      map(([gameDocument]) => this.gamesRepository.toJSON(gameDocument)),
     );
-
-    const ball: number = gameDocument.balls[indexRemainingBall];
-
-    await this.gamesRepository.update({ _id: gameDocument._id }, {
-      playing: true,
-      $push: {
-        ballsPlayed: gameDocument.balls[indexRemainingBall],
-      },
-      $pull: {
-        balls: gameDocument.balls[indexRemainingBall],
-      },
-    } as Partial<Game>);
-
-    this.gamesGateway.emitBall(gameDocument._id.toString(), ball);
-
-    const winners = await this.getWinners(
-      gameDocumentPopulated.purchasedCards as (PurchasedCard &
-        Document<any, any, any>)[],
-      ball,
-      gameDocument._id,
-    );
-
-    if (winners.length)
-      this.gamesGateway.emitWinners(gameDocument._id.toString(), winners);
-
-    const findOneGameDto: FindOneGameDto = { id: gameDocument._id };
-    return this.findOne(findOneGameDto);
   }
 
-  private async getWinners(
+  createBall(createBallGameDto: CreateBallGameDto) {
+    return this.gamesRepository
+      .rxFind({
+        _id: createBallGameDto.id,
+        played: false,
+      })
+      .pipe(
+        tap(([gameDocument]) => {
+          if (!gameDocument) throw new NotFoundException();
+        }),
+        switchMap(([gameDocument]) =>
+          from(
+            gameDocument.populate({
+              path: 'purchasedCards',
+              populate: {
+                path: 'card',
+              },
+            }),
+          ),
+        ),
+        tap((gameDocumentPopulated) => {
+          if (!gameDocumentPopulated.playing)
+            this.gamesGateway.emitGame(gameDocumentPopulated._id.toString(), {
+              playing: true,
+            });
+        }),
+        delayWhen((gameDocumentPopulated) =>
+          this.getBall(gameDocumentPopulated).pipe(
+            delayWhen((ball) =>
+              this.checkWinners(
+                gameDocumentPopulated.purchasedCards as (PurchasedCard &
+                  Document<any, any, any>)[],
+                ball,
+                gameDocumentPopulated._id.toString(),
+              ),
+            ),
+          ),
+        ),
+        switchMap((gameDocumentPopulated) =>
+          this.findOne({ id: gameDocumentPopulated._id }),
+        ),
+      );
+  }
+
+  private getBall(gameDocumentPopulated: Game & Document<any, any, any>) {
+    return of(
+      Math.floor(Math.random() * gameDocumentPopulated.balls.length),
+    ).pipe(
+      map((indexBall) => gameDocumentPopulated.balls[indexBall]),
+      tap((ball) => {
+        this.gamesRepository.rxUpdate({ _id: gameDocumentPopulated._id }, {
+          playing: true,
+          $push: {
+            ballsPlayed: ball,
+          },
+          $pull: {
+            balls: ball,
+          },
+        } as Partial<Game>);
+      }),
+      tap((ball) => {
+        this.gamesGateway.emitBall(gameDocumentPopulated._id.toString(), ball);
+      }),
+    );
+  }
+
+  private checkWinners(
     purchasedCardsPopulated: (PurchasedCard & Document<any, any, any>)[],
     ball: number,
     gameId: string,
-  ): Promise<string[]> {
-    const winners: string[] = [];
+  ) {
+    return from(purchasedCardsPopulated).pipe(
+      filter((purchasedCardPopulated) =>
+        (purchasedCardPopulated.card as Card).data.includes(ball),
+      ),
+      delayWhen((purchasedCardPopulated) =>
+        this.getScore(purchasedCardPopulated, ball).pipe(
+          filter((score) => !score.includes(false)),
+        ),
+      ),
+      tap((purchasedCardPopulated) => {
+        this.gamesRepository.rxUpdate({ _id: gameId }, {
+          playing: false,
+          played: true,
 
-    for (const purchasedCard of purchasedCardsPopulated) {
-      for (let i = 0; i < (purchasedCard.card as Card).data.length; i++) {
-        if ((purchasedCard.card as Card).data[i] === ball) {
-          purchasedCard.score[i] = true;
+          $push: {
+            winningCards: purchasedCardPopulated._id,
+          },
+        } as Partial<Game>);
+      }),
+      map((purchasedCardPopulated) => purchasedCardPopulated.user as string),
+      toArray(),
+      tap((winners) => {
+        if (winners.length) this.gamesGateway.emitWinners(gameId, winners);
+      }),
+    );
+  }
 
-          await this.purchasedCardsRepository.update(
-            { _id: purchasedCard._id },
-            { score: purchasedCard.score },
-          );
-
-          if (purchasedCard.score.every((value) => value === true)) {
-            winners.push(purchasedCard.user as string);
-
-            await this.gamesRepository.update({ _id: gameId }, {
-              playing: false,
-              played: true,
-
-              $push: {
-                winningCards: purchasedCard._id,
-              },
-            } as Partial<Game>);
-          }
-        }
-      }
-    }
-
-    return winners;
+  private getScore(
+    purchasedCardPopulated: PurchasedCard & Document<any, any, any>,
+    ball: number,
+  ) {
+    return of((purchasedCardPopulated.card as Card).data.indexOf(ball)).pipe(
+      map((index) =>
+        Object.assign([...purchasedCardPopulated.score], {
+          [index]: true,
+        }),
+      ),
+      tap((score) => {
+        this.purchasedCardsRepository.rxUpdate(
+          { _id: purchasedCardPopulated._id },
+          {
+            score: score,
+          },
+        );
+      }),
+    );
   }
 }

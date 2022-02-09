@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { tap, switchMap, from, map, of, toArray, Observable } from 'rxjs';
+import { tap, concatMap, from, map, of, toArray, Observable } from 'rxjs';
 
 import { IUser } from '@root/users/interfaces/user.interface';
 import {
@@ -49,9 +49,9 @@ export class PurchasedCardsService {
         tap(([gameDocument]) => {
           if (!gameDocument) throw new NotFoundException();
         }),
-        switchMap(([gameDocument]) => from(gameDocument.populate('cards'))),
+        concatMap(([gameDocument]) => from(gameDocument.populate('cards'))),
         map((gameDocument) => this.gamesRepository.toJSON(gameDocument)),
-        switchMap(($game: $Game) =>
+        concatMap(($game: $Game) =>
           of(
             ($game.cards as $Card[]).find(($card) =>
               createPurchasedCardDto.card
@@ -72,7 +72,7 @@ export class PurchasedCardsService {
                   },
                 } as Partial<User>);
             }),
-            switchMap(($card) =>
+            concatMap(($card) =>
               this.purhcasedCardsRepository.rxCreate({
                 user: user._id,
                 card: $card._id,
@@ -106,7 +106,7 @@ export class PurchasedCardsService {
     return this.purhcasedCardsRepository
       .rxFind({}, findPurchasedCardsDto.offset, findPurchasedCardsDto.limit)
       .pipe(
-        switchMap((purchasedCardsDocument) => from(purchasedCardsDocument)),
+        concatMap((purchasedCardsDocument) => from(purchasedCardsDocument)),
         map((purchasedCardDocument) =>
           this.purhcasedCardsRepository.toJSON(purchasedCardDocument),
         ),
