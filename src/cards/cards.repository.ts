@@ -14,6 +14,10 @@ export class CardsRepository {
     return await this.cardModel.create(card);
   }
 
+  rxCreate(card: Card): Observable<Card & Document<any, any, any>> {
+    return from(this.cardModel.create(card));
+  }
+
   async find(
     filter: Partial<$Card>,
     skip = 0,

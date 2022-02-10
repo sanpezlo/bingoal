@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { from, map, Observable, of, switchMap, tap, toArray } from 'rxjs';
 
 import { CardsRepository } from '@root/cards/cards.repository';
 import {
@@ -24,75 +25,86 @@ export class CardsService {
     private gamesRepository: GamesRepository,
   ) {}
 
-  async create(createCardDto: CreateCardDto): Promise<ICard> {
-    if (!createCardDto.data) createCardDto.data = await this.createData();
-
-    const [cardDocument] = await this.cardsRepository.find({
-      data: { $all: createCardDto.data },
-    } as unknown as Partial<Card>);
-    if (cardDocument) return this.cardsRepository.toJSON(cardDocument);
-
-    const newCardDocument = await this.cardsRepository.create({
-      data: createCardDto.data,
-    });
-    const $card = this.cardsRepository.toJSON(newCardDocument);
-
-    await this.gamesRepository.update({ played: false, playing: false }, {
-      $push: { cards: $card._id },
-    } as Partial<$Game>);
-
-    return $card;
+  create(createCardDto: CreateCardDto): Observable<ICard> {
+    return of(createCardDto).pipe(
+      switchMap(() => {
+        if (!createCardDto.data) return this.createData();
+        return of(createCardDto.data);
+      }),
+      switchMap((data) =>
+        this.cardsRepository
+          .rxFind({
+            data: { $all: data },
+          } as unknown as Partial<Card>)
+          .pipe(
+            switchMap(([cardDocument]) => {
+              if (Boolean(cardDocument)) return of(cardDocument);
+              return this.cardsRepository.rxCreate({ data: data }).pipe(
+                tap((cardDocument) =>
+                  this.gamesRepository.rxUpdate(
+                    { played: false, playing: false },
+                    {
+                      $push: { cards: cardDocument._id },
+                    } as Partial<$Game>,
+                  ),
+                ),
+              );
+            }),
+          ),
+      ),
+      map((cardDocument) => this.cardsRepository.toJSON(cardDocument)),
+    );
   }
 
-  async find(findCardsDto: FindCardsDto): Promise<ICard[]> {
-    return (
-      await this.cardsRepository.find(
-        {},
-        findCardsDto.offset,
-        findCardsDto.limit,
-      )
-    ).map((cardDocument) => this.cardsRepository.toJSON(cardDocument));
+  find(findCardsDto: FindCardsDto): Observable<ICard[]> {
+    return from(
+      this.cardsRepository.rxFind({}, findCardsDto.offset, findCardsDto.limit),
+    ).pipe(
+      switchMap((cardsDocument) => from(cardsDocument)),
+      map((cardDocument) => this.cardsRepository.toJSON(cardDocument)),
+      toArray(),
+    );
   }
 
-  async findOne(findOneCardDto: FindOneCardDto): Promise<ICard> {
-    const [cardDocument] = await this.cardsRepository.find({
-      _id: findOneCardDto.id,
-    });
-    if (!cardDocument) throw new NotFoundException();
-    return this.cardsRepository.toJSON(cardDocument);
+  findOne(findOneCardDto: FindOneCardDto): Observable<ICard> {
+    return this.cardsRepository.rxFind({ _id: findOneCardDto.id }).pipe(
+      tap(([cardDocument]) => {
+        if (!cardDocument) throw new NotFoundException();
+      }),
+      map(([cardDocument]) => this.cardsRepository.toJSON(cardDocument)),
+    );
   }
 
-  async createData(): Promise<number[]> {
-    const result: number[] = [];
+  createData(): Observable<number[]> {
     const B = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
     const I = [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
     const N = [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45];
     const G = [46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60];
     const O = [61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75];
-
-    for (let i = 0; i < 5; i++)
-      result.push(...B.splice(Math.floor(Math.random() * B.length), 1));
-
-    for (let i = 0; i < 5; i++)
-      result.push(...I.splice(Math.floor(Math.random() * I.length), 1));
-
-    for (let i = 0; i < 5; i++) {
-      if (i === 2) result.push(0);
-      else {
-        result.push(...N.splice(Math.floor(Math.random() * N.length), 1));
-      }
-    }
-
-    for (let i = 0; i < 5; i++)
-      result.push(...G.splice(Math.floor(Math.random() * G.length), 1));
-
-    for (let i = 0; i < 5; i++)
-      result.push(...O.splice(Math.floor(Math.random() * O.length), 1));
-
-    const cards = await this.cardsRepository.find({
-      data: { $all: result } as unknown as number[],
-    });
-    if (cards.length) return this.createData();
-    return result;
+    return from(new Array(25)).pipe(
+      map((v, i) => {
+        if (i < 5) return B.splice(Math.floor(Math.random() * B.length), 1)[0];
+        if (i < 10) return I.splice(Math.floor(Math.random() * I.length), 1)[0];
+        if (i < 15) {
+          if (i === 12) return 0;
+          return N.splice(Math.floor(Math.random() * N.length), 1)[0];
+        }
+        if (i < 20) return G.splice(Math.floor(Math.random() * G.length), 1)[0];
+        return O.splice(Math.floor(Math.random() * O.length), 1)[0];
+      }),
+      toArray(),
+      switchMap((data) =>
+        this.cardsRepository
+          .rxFind({
+            data: { $all: data } as unknown as number[],
+          })
+          .pipe(
+            switchMap((cardsDocument) => {
+              if (cardsDocument.length) return this.createData();
+              return of(data);
+            }),
+          ),
+      ),
+    );
   }
 }
