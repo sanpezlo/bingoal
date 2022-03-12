@@ -10,23 +10,11 @@ import { $User, IUser } from '@root/users/interfaces/user.interface';
 export class UsersRepository {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  async create(user: User): Promise<User & Document<any, any, any>> {
-    return await this.userModel.create(user);
-  }
-
-  rxCreate(user: User): Observable<User & Document<any, any, any>> {
+  create(user: User): Observable<User & Document<any, any, any>> {
     return from(this.userModel.create(user));
   }
 
-  async find(
-    filter: Partial<$User>,
-    skip = 0,
-    limit = 20,
-  ): Promise<(User & Document<any, any, any>)[]> {
-    return await this.userModel.find(filter).skip(skip).limit(limit);
-  }
-
-  rxFind(
+  find(
     filter: Partial<$User>,
     skip = 0,
     limit = 20,
@@ -36,19 +24,11 @@ export class UsersRepository {
     ) as Observable<(User & Document<any, any, any>)[]>;
   }
 
-  async update(filter: Partial<$User>, update: Partial<User>): Promise<void> {
-    await this.userModel.updateMany(filter, update);
-  }
-
-  rxUpdate(filter: Partial<$User>, update: Partial<User>): void {
+  update(filter: Partial<$User>, update: Partial<User>): void {
     from(this.userModel.updateMany(filter, update)).subscribe();
   }
 
-  async delete(filter: Partial<$User>): Promise<void> {
-    await this.userModel.deleteMany(filter);
-  }
-
-  rxDelete(filter: Partial<$User>): void {
+  delete(filter: Partial<$User>): void {
     from(this.userModel.deleteMany(filter)).subscribe();
   }
 

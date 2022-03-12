@@ -26,13 +26,13 @@ export class UsersService {
   ) {}
 
   create(createUserDto: CreateUserDto): Observable<IUser> {
-    return this.usersRepository.rxFind({ email: createUserDto.email }).pipe(
+    return this.usersRepository.find({ email: createUserDto.email }).pipe(
       tap((usersDocument) => {
         if (usersDocument.length) throw new ForbiddenException();
       }),
-      concatMap(() => this.authService.rxHash(createUserDto.password)),
+      concatMap(() => this.authService.hash(createUserDto.password)),
       concatMap((hashed: string) =>
-        this.usersRepository.rxCreate({
+        this.usersRepository.create({
           ...createUserDto,
           password: hashed,
         }),
@@ -44,7 +44,7 @@ export class UsersService {
 
   find(findUsersDto: FindUsersDto): Observable<IUser[]> {
     return this.usersRepository
-      .rxFind({}, findUsersDto.offset, findUsersDto.limit)
+      .find({}, findUsersDto.offset, findUsersDto.limit)
       .pipe(
         concatMap((usersDocument) => from(usersDocument)),
         map((userDocument) => this.usersRepository.toJSON(userDocument)),
@@ -58,7 +58,7 @@ export class UsersService {
   }
 
   findOne(findOneUserDto: FindOneUserDto): Observable<IUser> {
-    return this.usersRepository.rxFind({ _id: findOneUserDto.id }).pipe(
+    return this.usersRepository.find({ _id: findOneUserDto.id }).pipe(
       tap(([userDocument]) => {
         if (!userDocument) throw new NotFoundException();
       }),
@@ -68,22 +68,22 @@ export class UsersService {
   }
 
   update(user: IUser, updateUserDto: UpdateUserDto): Observable<IUser> {
-    return this.usersRepository.rxFind({ _id: user._id }).pipe(
+    return this.usersRepository.find({ _id: user._id }).pipe(
       map(([userDocument]) => this.usersRepository.toJSON(userDocument)),
       concatMap(($user: $User) =>
-        this.authService.rxValidatePassword($user, updateUserDto.password),
+        this.authService.isValidatedPassword($user, updateUserDto.password),
       ),
       tap((isValidPassword: boolean) => {
         if (!isValidPassword) throw new ForbiddenException();
       }),
       concatMap(() =>
-        this.usersRepository.rxFind({ email: updateUserDto.email }),
+        this.usersRepository.find({ email: updateUserDto.email }),
       ),
       tap((usersDocument) => {
         if (usersDocument.length) throw new ForbiddenException();
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...update } = updateUserDto;
-        this.usersRepository.rxUpdate({ _id: user._id }, update);
+        this.usersRepository.update({ _id: user._id }, update);
       }),
       map(() => ({ id: user._id })),
       concatMap((findOneUserDto) => this.findOne(findOneUserDto)),

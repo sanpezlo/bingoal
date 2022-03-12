@@ -38,7 +38,7 @@ export class PurchasedCardsService {
     user: IUser,
   ): Observable<IPurchasedCard> {
     return this.gamesRepository
-      .rxFind({
+      .find({
         played: false,
         playing: false,
         ...(createPurchasedCardDto.game
@@ -66,14 +66,14 @@ export class PurchasedCardsService {
                   (game) => `${game}` === `${$game._id}`,
                 )
               )
-                this.usersRepository.rxUpdate({ _id: user._id }, {
+                this.usersRepository.update({ _id: user._id }, {
                   $push: {
                     games: $game._id,
                   },
                 } as Partial<User>);
             }),
             concatMap(($card) =>
-              this.purhcasedCardsRepository.rxCreate({
+              this.purhcasedCardsRepository.create({
                 user: user._id,
                 card: $card._id,
                 game: $game._id,
@@ -85,17 +85,14 @@ export class PurchasedCardsService {
           ),
         ),
         tap(($purchasedCard: $PurchasedCard) => {
-          this.gamesRepository.rxUpdate(
-            { _id: $purchasedCard.game as string },
-            {
-              $push: {
-                purchasedCards: $purchasedCard._id,
-              },
-              $pull: {
-                cards: $purchasedCard.card,
-              },
-            } as Partial<Game>,
-          );
+          this.gamesRepository.update({ _id: $purchasedCard.game as string }, {
+            $push: {
+              purchasedCards: $purchasedCard._id,
+            },
+            $pull: {
+              cards: $purchasedCard.card,
+            },
+          } as Partial<Game>);
         }),
       );
   }
@@ -104,7 +101,7 @@ export class PurchasedCardsService {
     findPurchasedCardsDto: FindPurchasedCardsDto,
   ): Observable<IPurchasedCard[]> {
     return this.purhcasedCardsRepository
-      .rxFind({}, findPurchasedCardsDto.offset, findPurchasedCardsDto.limit)
+      .find({}, findPurchasedCardsDto.offset, findPurchasedCardsDto.limit)
       .pipe(
         concatMap((purchasedCardsDocument) => from(purchasedCardsDocument)),
         map((purchasedCardDocument) =>
@@ -118,7 +115,7 @@ export class PurchasedCardsService {
     findOnePurchasedCardDto: FindOnePurchasedCardDto,
   ): Observable<IPurchasedCard> {
     return this.purhcasedCardsRepository
-      .rxFind({
+      .find({
         _id: findOnePurchasedCardDto.id,
       })
       .pipe(

@@ -9,6 +9,19 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { compare, genSalt, hash } from 'bcrypt';
+import {
+  Observable,
+  from,
+  concatMap,
+  of,
+  map,
+  switchMap,
+  tap,
+  catchError,
+  throwError,
+  switchMapTo,
+  mapTo,
+} from 'rxjs';
 
 import {
   IAuth,
@@ -19,7 +32,6 @@ import { TokensRepository } from '@root/auth/tokens.repository';
 import { UsersRepository } from '@root/users/users.repository';
 import { IUser, $User } from '@root/users/interfaces/user.interface';
 import { RefreshDto, UpdatePasswordDto } from '@root/auth/dto/auth.dto';
-import { Observable, from, concatMap } from 'rxjs';
 
 @Injectable()
 export class AuthService {
@@ -31,142 +43,167 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async login(user: IUser): Promise<IAuth> {
-    const $accessPayload: $AccessPayload = {
-      sub: user._id,
-    };
-    const accessToken = this.createAccessToken($accessPayload);
-
-    const $token = this.tokensRepository.toJSON(
-      await this.tokensRepository.create({
-        user: $accessPayload.sub,
-      }),
-    );
-    const $refreshPayload: $RefreshPayload = {
-      sub: $accessPayload.sub,
-      jti: $token._id,
-    };
-    const $refreshToken = this.createRefreshToken($refreshPayload);
-
-    return {
-      token_type: 'Bearer',
-      access_token: accessToken,
-      expires_in: this.configService.get<number>('token.access.expires_in'),
-      refresh_token: $refreshToken,
-      refresh_token_expires_in: this.configService.get<number>(
-        'token.refresh.expires_in',
+  login(user: IUser): Observable<IAuth> {
+    return of({ sub: user._id }).pipe(
+      switchMap(($accessPayload: $AccessPayload) =>
+        this.createAccessToken($accessPayload),
       ),
-    };
-  }
-
-  async refresh(refreshDto: RefreshDto): Promise<IAuth> {
-    try {
-      const $refreshPayload = this.jwtService.verify<$RefreshPayload>(
-        refreshDto.refresh,
-        {
-          secret: this.configService.get<string>('token.refresh.secret'),
-          ignoreExpiration: false,
-        },
-      );
-      const [tokenDocument] = await this.tokensRepository.find({
-        _id: $refreshPayload.jti,
-        user: $refreshPayload.sub,
-      });
-      if (!tokenDocument) throw new UnauthorizedException();
-
-      const $newRefreshPayload: $RefreshPayload = {
-        sub: $refreshPayload.sub,
-        jti: $refreshPayload.jti,
-      };
-      const $accessPayload: $AccessPayload = { sub: $newRefreshPayload.sub };
-
-      const accessToken = this.createAccessToken($accessPayload);
-      const $refreshToken = this.createRefreshToken($newRefreshPayload);
-
-      return {
-        token_type: 'Bearer',
-        access_token: accessToken,
-        expires_in: this.configService.get<number>('token.access.expires_in'),
-        refresh_token: $refreshToken,
-        refresh_token_expires_in: this.configService.get<number>(
-          'token.refresh.expires_in',
+      switchMap((accessToken) =>
+        this.tokensRepository.create({ user: user._id }).pipe(
+          map((tokenDocument) => this.tokensRepository.toJSON(tokenDocument)),
+          map(($token) => ({
+            sub: user._id.toString(),
+            jti: $token._id.toString(),
+          })),
+          switchMap(($refreshPayload: $RefreshPayload) =>
+            this.createRefreshToken($refreshPayload),
+          ),
+          map((refreshToken) => ({
+            token_type: 'Bearer',
+            access_token: accessToken,
+            expires_in: this.configService.get<number>(
+              'token.access.expires_in',
+            ),
+            refresh_token: refreshToken,
+            refresh_token_expires_in: this.configService.get<number>(
+              'token.refresh.expires_in',
+            ),
+          })),
         ),
-      };
-    } catch (error) {
-      const $refreshPayload = this.jwtService.decode(
-        refreshDto.refresh,
-      ) as $RefreshPayload;
-      await this.tokensRepository.delete({ _id: $refreshPayload.jti });
-      throw new BadRequestException(['refresh must be a valid jwt string']);
-    }
+      ),
+    );
   }
 
-  async validateLocal(email: string, password: string): Promise<IUser> {
-    const [userDocument] = await this.usersRepository.find({ email });
-    if (!userDocument) return null;
-    const $user: $User = this.usersRepository.toJSON(userDocument);
-    if (await this.validatePassword($user, password))
-      return this.usersRepository.format($user);
-    return null;
+  refresh(refreshDto: RefreshDto): Observable<IAuth> {
+    return from(
+      this.jwtService.verifyAsync<$RefreshPayload>(refreshDto.refresh, {
+        secret: this.configService.get<string>('token.refresh.secret'),
+        ignoreExpiration: false,
+      }),
+    ).pipe(
+      switchMap(($refreshPayload: $RefreshPayload) =>
+        this.tokensRepository.find({
+          _id: $refreshPayload.jti,
+          user: $refreshPayload.sub,
+        }),
+      ),
+      tap(([tokenDocument]) => {
+        if (!tokenDocument) throw new UnauthorizedException();
+      }),
+      map(([tokenDocument]) => ({
+        sub: tokenDocument.user.toString(),
+        jti: tokenDocument._id.toString(),
+      })),
+      switchMap(($refreshPayload: $RefreshPayload) =>
+        this.createRefreshToken($refreshPayload).pipe(
+          switchMap((refreshToken) =>
+            this.createAccessToken({ sub: $refreshPayload.sub }).pipe(
+              map((accessToken) => ({
+                token_type: 'Bearer',
+                access_token: accessToken,
+                expires_in: this.configService.get<number>(
+                  'token.access.expires_in',
+                ),
+                refresh_token: refreshToken,
+                refresh_token_expires_in: this.configService.get<number>(
+                  'token.refresh.expires_in',
+                ),
+              })),
+            ),
+          ),
+        ),
+      ),
+      catchError(() =>
+        of<$RefreshPayload>(
+          this.jwtService.decode(refreshDto.refresh) as $RefreshPayload,
+        ).pipe(
+          tap(($refreshPayload) =>
+            this.tokensRepository.delete({ _id: $refreshPayload.jti }),
+          ),
+          switchMap(() =>
+            throwError(
+              () =>
+                new BadRequestException(['refresh must be a valid jwt string']),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  async validateJwt(sub: string): Promise<IUser> {
-    const [userDocument] = await this.usersRepository.find({ _id: sub });
-    if (!userDocument) return null;
-    const $user: $User = this.usersRepository.toJSON(userDocument);
-    return this.usersRepository.format($user);
+  validateLocal(email: string, password: string) {
+    return this.usersRepository.find({ email }).pipe(
+      tap(([userDocument]) => {
+        if (!userDocument) throw new UnauthorizedException();
+      }),
+      map(([userDocument]) => this.usersRepository.toJSON(userDocument)),
+      switchMap(($user) =>
+        this.isValidatedPassword($user, password).pipe(
+          tap((isValid) => {
+            if (!isValid) throw new UnauthorizedException();
+          }),
+          mapTo($user),
+        ),
+      ),
+      map(($user) => this.usersRepository.format($user)),
+    );
   }
 
-  async validatePassword(user: $User, password: string): Promise<boolean> {
-    return await compare(password, user.password);
+  validateJwt(sub: string): Observable<IUser> {
+    return this.usersRepository.find({ _id: sub }).pipe(
+      tap(([userDocument]) => {
+        if (!userDocument) throw new UnauthorizedException();
+      }),
+      map(([userDocument]) => this.usersRepository.toJSON(userDocument)),
+      map(($user) => this.usersRepository.format($user)),
+    );
   }
 
-  rxValidatePassword(user: $User, password: string): Observable<boolean> {
+  isValidatedPassword(user: $User, password: string): Observable<boolean> {
     return from(compare(password, user.password));
   }
 
-  async hash(password: string): Promise<string> {
-    const salt = await genSalt(10);
-    return await hash(password, salt);
-  }
-
-  rxHash(password: string): Observable<string> {
+  hash(password: string): Observable<string> {
     return from(genSalt(10)).pipe(
       concatMap((salt) => from(hash(password, salt))),
     );
   }
 
-  createAccessToken(accessPayload: $AccessPayload): string {
-    return this.jwtService.sign(accessPayload);
+  createAccessToken(accessPayload: $AccessPayload): Observable<string> {
+    return from(this.jwtService.signAsync(accessPayload));
   }
 
-  createRefreshToken($refreshPayload: $RefreshPayload): string {
-    return this.jwtService.sign($refreshPayload, {
-      secret: this.configService.get<string>('token.refresh.secret'),
-      expiresIn: this.configService.get<number>('token.refresh.expires_in'),
-    });
+  createRefreshToken($refreshPayload: $RefreshPayload): Observable<string> {
+    return from(
+      this.jwtService.signAsync($refreshPayload, {
+        secret: this.configService.get<string>('token.refresh.secret'),
+        expiresIn: this.configService.get<number>('token.refresh.expires_in'),
+      }),
+    );
   }
 
-  async updatePassword(
+  updatePassword(
     user: IUser,
     updatePasswordDto: UpdatePasswordDto,
-  ): Promise<IAuth> {
-    const [userDocument] = await this.usersRepository.find({
-      _id: user._id,
-    });
-    const $user: $User = this.usersRepository.toJSON(userDocument);
-    if (!(await this.validatePassword($user, updatePasswordDto.password)))
-      throw new ForbiddenException();
-
-    const newPassword = await this.hash(updatePasswordDto.newPassword);
-
-    await this.usersRepository.update(
-      { _id: user._id },
-      { password: newPassword },
+  ): Observable<IAuth> {
+    return this.usersRepository.find({ _id: user._id }).pipe(
+      map(([userDocument]) => this.usersRepository.toJSON(userDocument)),
+      switchMap(($user) =>
+        this.isValidatedPassword($user, updatePasswordDto.password).pipe(
+          tap((isValidPassword) => {
+            if (!isValidPassword) throw new ForbiddenException();
+          }),
+        ),
+      ),
+      switchMap(() => this.hash(updatePasswordDto.newPassword)),
+      tap((newPassword) =>
+        this.usersRepository.update(
+          { _id: user._id },
+          { password: newPassword },
+        ),
+      ),
+      tap(() => this.tokensRepository.delete({ user: user._id })),
+      switchMapTo(this.login(user)),
     );
-
-    await this.tokensRepository.delete({ user: user._id });
-
-    return await this.login(user);
   }
 }

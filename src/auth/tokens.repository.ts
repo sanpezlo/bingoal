@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Document, Model } from 'mongoose';
+import { Observable, from } from 'rxjs';
 
 import { Token, TokenDocument } from '@root/auth/schemas/token.schema';
 import { $Token } from '@root/auth/interfaces/auth.interface';
@@ -11,18 +12,20 @@ export class TokensRepository {
     @InjectModel(Token.name) private tokenModel: Model<TokenDocument>,
   ) {}
 
-  async create(token: Token): Promise<Token & Document<any, any, any>> {
-    return await this.tokenModel.create(token);
+  create(token: Token): Observable<Token & Document<any, any, any>> {
+    return from(this.tokenModel.create(token));
   }
 
-  async find(
+  find(
     filter: Partial<$Token>,
-  ): Promise<(Token & Document<any, any, any>)[]> {
-    return await this.tokenModel.find(filter);
+  ): Observable<(Token & Document<any, any, any>)[]> {
+    return from(this.tokenModel.find(filter)) as Observable<
+      (Token & Document<any, any, any>)[]
+    >;
   }
 
-  async delete(filter: Partial<$Token>): Promise<void> {
-    await this.tokenModel.deleteMany(filter);
+  delete(filter: Partial<$Token>): void {
+    from(this.tokenModel.deleteMany(filter)).subscribe();
   }
 
   toJSON(tokenDocument: Token & Document<any, any, any>): $Token {

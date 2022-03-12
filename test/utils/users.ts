@@ -1,4 +1,5 @@
 import { genSalt, hash } from 'bcrypt';
+import { firstValueFrom } from 'rxjs';
 
 import { UsersRepository } from '@root/users/users.repository';
 import { User } from '@root/users/schemas/user.schema';
@@ -18,9 +19,11 @@ export async function createUser(usersRepository: UsersRepository, user: User) {
   const salt = await genSalt(10);
 
   return usersRepository.toJSON(
-    await usersRepository.create({
-      ...user,
-      password: await hash(user.password, salt),
-    }),
+    await firstValueFrom(
+      usersRepository.create({
+        ...user,
+        password: await hash(user.password, salt),
+      }),
+    ),
   );
 }

@@ -33,15 +33,15 @@ export class CardsService {
       }),
       switchMap((data) =>
         this.cardsRepository
-          .rxFind({
+          .find({
             data: { $all: data },
           } as unknown as Partial<Card>)
           .pipe(
             switchMap(([cardDocument]) => {
               if (Boolean(cardDocument)) return of(cardDocument);
-              return this.cardsRepository.rxCreate({ data: data }).pipe(
+              return this.cardsRepository.create({ data: data }).pipe(
                 tap((cardDocument) =>
-                  this.gamesRepository.rxUpdate(
+                  this.gamesRepository.update(
                     { played: false, playing: false },
                     {
                       $push: { cards: cardDocument._id },
@@ -58,7 +58,7 @@ export class CardsService {
 
   find(findCardsDto: FindCardsDto): Observable<ICard[]> {
     return from(
-      this.cardsRepository.rxFind({}, findCardsDto.offset, findCardsDto.limit),
+      this.cardsRepository.find({}, findCardsDto.offset, findCardsDto.limit),
     ).pipe(
       switchMap((cardsDocument) => from(cardsDocument)),
       map((cardDocument) => this.cardsRepository.toJSON(cardDocument)),
@@ -67,7 +67,7 @@ export class CardsService {
   }
 
   findOne(findOneCardDto: FindOneCardDto): Observable<ICard> {
-    return this.cardsRepository.rxFind({ _id: findOneCardDto.id }).pipe(
+    return this.cardsRepository.find({ _id: findOneCardDto.id }).pipe(
       tap(([cardDocument]) => {
         if (!cardDocument) throw new NotFoundException();
       }),
@@ -95,7 +95,7 @@ export class CardsService {
       toArray(),
       switchMap((data) =>
         this.cardsRepository
-          .rxFind({
+          .find({
             data: { $all: data } as unknown as number[],
           })
           .pipe(

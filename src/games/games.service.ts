@@ -43,18 +43,18 @@ export class GamesService {
   ) {}
 
   create(): Observable<IGame> {
-    return this.cardsRepository.rxFind({}).pipe(
+    return this.cardsRepository.find({}).pipe(
       switchMap((cardsDocument) => from(cardsDocument)),
       map((cardDocument) => this.cardsRepository.toJSON(cardDocument)),
       toArray(),
-      switchMap(($cards) => this.gamesRepository.rxCreate({ cards: $cards })),
+      switchMap(($cards) => this.gamesRepository.create({ cards: $cards })),
       map((gameDocument) => this.gamesRepository.toJSON(gameDocument)),
     );
   }
 
   find(findGamesDto: FindGamesDto): Observable<IGame[]> {
     return this.gamesRepository
-      .rxFind({}, findGamesDto.offset, findGamesDto.limit)
+      .find({}, findGamesDto.offset, findGamesDto.limit)
       .pipe(
         switchMap((gamesDocument) => from(gamesDocument)),
         map((gameDocument) => this.gamesRepository.toJSON(gameDocument)),
@@ -63,7 +63,7 @@ export class GamesService {
   }
 
   findOne(findOneGameDto: FindOneGameDto) {
-    return this.gamesRepository.rxFind({ _id: findOneGameDto.id }).pipe(
+    return this.gamesRepository.find({ _id: findOneGameDto.id }).pipe(
       tap(([gameDocument]) => {
         if (!gameDocument) throw new NotFoundException();
       }),
@@ -73,7 +73,7 @@ export class GamesService {
 
   createBall(createBallGameDto: CreateBallGameDto) {
     return this.gamesRepository
-      .rxFind({
+      .find({
         _id: createBallGameDto.id,
         played: false,
       })
@@ -121,7 +121,7 @@ export class GamesService {
     ).pipe(
       map((indexBall) => gameDocumentPopulated.balls[indexBall]),
       tap((ball) => {
-        this.gamesRepository.rxUpdate({ _id: gameDocumentPopulated._id }, {
+        this.gamesRepository.update({ _id: gameDocumentPopulated._id }, {
           playing: true,
           $push: {
             ballsPlayed: ball,
@@ -152,7 +152,7 @@ export class GamesService {
         ),
       ),
       tap((purchasedCardPopulated) => {
-        this.gamesRepository.rxUpdate({ _id: gameId }, {
+        this.gamesRepository.update({ _id: gameId }, {
           playing: false,
           played: true,
 
@@ -180,7 +180,7 @@ export class GamesService {
         }),
       ),
       tap((score) => {
-        this.purchasedCardsRepository.rxUpdate(
+        this.purchasedCardsRepository.update(
           { _id: purchasedCardPopulated._id },
           {
             score: score,

@@ -16,27 +16,13 @@ export class PurchasedCardsRepository {
     private purchasedCardModel: Model<PurchasedCardDocument>,
   ) {}
 
-  async create(
-    purchasedCard: PurchasedCard,
-  ): Promise<PurchasedCard & Document<any, any, any>> {
-    return await this.purchasedCardModel.create(purchasedCard);
-  }
-
-  rxCreate(
+  create(
     purchasedCard: PurchasedCard,
   ): Observable<PurchasedCard & Document<any, any, any>> {
     return from(this.purchasedCardModel.create(purchasedCard));
   }
 
-  async find(
-    filter: Partial<$PurchasedCard>,
-    skip = 0,
-    limit = 20,
-  ): Promise<(PurchasedCard & Document<any, any, any>)[]> {
-    return await this.purchasedCardModel.find(filter).skip(skip).limit(limit);
-  }
-
-  rxFind(
+  find(
     filter: Partial<$PurchasedCard>,
     skip = 0,
     limit = 20,
@@ -46,25 +32,14 @@ export class PurchasedCardsRepository {
     ) as Observable<(PurchasedCard & Document<any, any, any>)[]>;
   }
 
-  async update(
-    filter: Partial<$PurchasedCard>,
-    update: Partial<PurchasedCard>,
-  ): Promise<void> {
-    await this.purchasedCardModel.updateMany(filter, update);
-  }
-
-  rxUpdate(
+  update(
     filter: Partial<$PurchasedCard>,
     update: Partial<PurchasedCard>,
   ): void {
     from(this.purchasedCardModel.updateMany(filter, update)).subscribe();
   }
 
-  async delete(filter: Partial<$PurchasedCard>): Promise<void> {
-    await this.purchasedCardModel.deleteMany(filter);
-  }
-
-  rxDelete(filter: Partial<$PurchasedCard>): void {
+  delete(filter: Partial<$PurchasedCard>): void {
     from(this.purchasedCardModel.deleteMany(filter)).subscribe();
   }
 

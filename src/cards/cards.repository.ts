@@ -10,23 +10,11 @@ import { $Card } from '@root/cards/interfaces/card.interface';
 export class CardsRepository {
   constructor(@InjectModel(Card.name) private cardModel: Model<CardDocument>) {}
 
-  async create(card: Card): Promise<Card & Document<any, any, any>> {
-    return await this.cardModel.create(card);
-  }
-
-  rxCreate(card: Card): Observable<Card & Document<any, any, any>> {
+  create(card: Card): Observable<Card & Document<any, any, any>> {
     return from(this.cardModel.create(card));
   }
 
-  async find(
-    filter: Partial<$Card>,
-    skip = 0,
-    limit = 20,
-  ): Promise<(Card & Document<any, any, any>)[]> {
-    return await this.cardModel.find(filter).skip(skip).limit(limit);
-  }
-
-  rxFind(
+  find(
     filter: Partial<$Card>,
     skip = 0,
     limit = 20,

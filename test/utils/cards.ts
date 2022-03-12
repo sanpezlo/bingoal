@@ -1,3 +1,5 @@
+import { firstValueFrom } from 'rxjs';
+
 import { CardsRepository } from '@root/cards/cards.repository';
 import { Card } from '@root/cards/schemas/card.schema';
 
@@ -17,5 +19,7 @@ export const _cards: Card[] = [
 ];
 
 export async function createCard(cardsRepository: CardsRepository, card: Card) {
-  return cardsRepository.toJSON(await cardsRepository.create(card));
+  return cardsRepository.toJSON(
+    await firstValueFrom(cardsRepository.create(card)),
+  );
 }

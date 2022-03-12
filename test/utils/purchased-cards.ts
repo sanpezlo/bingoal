@@ -1,3 +1,5 @@
+import { firstValueFrom } from 'rxjs';
+
 import { PurchasedCardsRepository } from '@root/purchased-cards/purchased-cards.repository';
 import { PurchasedCard } from '@root/purchased-cards/schemas/purchased-card.schema';
 import { GamesRepository } from '@root/games/games.repository';
@@ -11,7 +13,7 @@ export async function createPurchasedCard(
   purchasedCard: PurchasedCard,
 ) {
   const $purchasedCard = purchasedCardsRepository.toJSON(
-    await purchasedCardsRepository.create(purchasedCard),
+    await firstValueFrom(purchasedCardsRepository.create(purchasedCard)),
   );
 
   await gamesRepository.update({ _id: purchasedCard.game as string }, {

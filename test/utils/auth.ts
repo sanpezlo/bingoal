@@ -1,5 +1,6 @@
 import { sign } from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
+import { firstValueFrom } from 'rxjs';
 
 import {
   $AccessPayload,
@@ -32,9 +33,11 @@ export async function createRefreshToken(
   id: string,
 ): Promise<string> {
   const $token = tokensRepository.toJSON(
-    await tokensRepository.create({
-      user: id,
-    }),
+    await firstValueFrom(
+      tokensRepository.create({
+        user: id,
+      }),
+    ),
   );
 
   const refreshPayload: $RefreshPayload = {
